@@ -1,6 +1,11 @@
 /*
  Code by: Jacob A. Bethany.
 
+ Last Update: Friday, March 20, 2015 @ 8:58 PM PST
+ Last Code Addition: Generic File I/O w/ subclassed functions and via
+ generic c-style callback function as parmeter, which was dumped into
+ the original C code for these functions as well.
+
  This file contains code for a generic linked list that is very widely applicable
  in its usage.
 
@@ -16,28 +21,7 @@
  variable block that is shared across the entire group. This is essentially just a safety check incase someone
  using this code is doing so incorrectly.
 
- -Create functions to read and write lists to files.
- (Either use callbacks like below, or empty virtual functions to subclass.)
- WriteList ( unsigned short *FileName, (*writecallback)(void*lpData) )
-{{
- open file.
-
- while ( enumerate ( (void **) &VariableBlock ) )
-         writecallback ( VariableBlock );
-
- close file.
-}}
-
- ReadList ( unsigned short *FileName, (*readcallback)(FILE*in) )
-{{
- open file
-
- VARIABLE_BLOCK_STRUCTURE *pVariableBlock = 0;
- while ( pVariableBlock = readcallback() )
-         AddNode ( pVariableBlock, this ->StructureSize );
-
- close file
-}}
+ -Create functions to read files as group lists (IE allocated all of the space needed at once for larger files).
 
  ___________________________________________________________________________________________
 
@@ -1646,7 +1630,6 @@
  return 0;
 }}
 
-
 /*
  This function should be subclassed.
 */
@@ -1662,4 +1645,174 @@
 
  *outLong = 0;
  return 0;
+}}
+
+ unsigned long LINKED_LIST_CLASS::CountListNodes ( void )
+{{
+ LINKED_LIST *Node = 0;
+ unsigned long i = 0;
+
+ while ( Enumerate ( &Node ) )
+         i += 1;
+
+ return i;
+}}
+
+/*
+ Saves a generic linked list to a file.
+
+ *This is from the old c-style callback function parameter form.
+*/
+ unsigned char LINKED_LIST_CLASS::SaveListEx ( unsigned short *FileName, LinkedListWriteCallback SomeWriteCallback )
+{{
+ FILE *out = 0;
+ LINKED_LIST *Node = 0;
+ unsigned long ListLength = 0;
+
+ //Try to open the file specified.
+ if ( ! (out = _wfopen ( FileName, L"wb" )) )
+      return 0;
+
+ //Count the number of nodes in the linked list that we need to write out.
+ ListLength = this ->CountListNodes (  );
+
+ //Write out the number of nodes that we're saving to the file.
+ fwrite ( &ListLength, sizeof ( unsigned long ), 1, out );
+
+ //While we still have nodes to write, call the write callback to do so.
+ while ( Enumerate ( &Node ) )
+         SomeWriteCallback ( out, Node ->lpData );
+
+ //We're done with the file, close it.
+ fclose ( out );
+
+ return 1;
+}}
+
+/*
+ Loads a generic linked list from a file.
+
+ *This is from the old c-style callback function parameter form.
+*/
+ unsigned char LINKED_LIST_CLASS::LoadListEx ( unsigned short *FileName, unsigned long StructureSize, LinkedListReadCallback SomeReadCallback )
+{{
+ FILE *in = 0;
+ void *pVariableBlock = 0;
+ unsigned long ListLength = 0, i = 0;
+
+ //Try to open the file passed to us.
+ if ( ! (in = _wfopen ( FileName, L"rb" )) )
+      return 0;
+
+ //Read in the number of linked list nodes that were saved to this file.
+ fread ( &ListLength, sizeof ( unsigned long ), 1, in );
+
+ for ( i = 0; i < ListLength; i += 1 )
+      {
+       if ( ! (pVariableBlock = SomeReadCallback ( in )) )
+            break;
+
+       if ( ! AddNode ( pVariableBlock, StructureSize ) )
+           {
+            free ( pVariableBlock );
+
+            break;
+           }
+      }
+
+ fclose ( in );
+
+ return 1;
+}}
+
+/*
+ This must be subclassed with relevant data before calling this ->SaveList (  );
+*/
+ unsigned char LINKED_LIST_CLASS::WriteCallback ( FILE *out, void *lpData )
+{{
+ MessageBoxW ( NULL, L"Error: You never subclassed WriteCallback in the LINKED_LIST Class.\r\n" \
+               L"We have no way of knowing how to write your customly defined structure to a file until you do so.", L"Error:", MB_OK );
+
+ return 0;
+}}
+
+/*
+ This must be subclassed with relevant data before calling this ->LoadList (  );
+*/
+ void *LINKED_LIST_CLASS::ReadCallback ( FILE *in )
+{{
+ MessageBoxW ( NULL, L"Error: You never subclassed ReadCallback in the LINKED_LIST Class.\r\n" \
+               L"We have no way of knowing how to read your customly defined structure from a file until you do so.", L"Error:", MB_OK );
+
+ return 0;
+}}
+
+/*
+ Saves a generic linked list to a file.
+
+ *This is from the old c-style callback function parameter form.
+*/
+ unsigned char LINKED_LIST_CLASS::SaveList ( unsigned short *FileName )
+{{
+ FILE *out = 0;
+ LINKED_LIST *Node = 0;
+ unsigned long ListLength = 0;
+
+ //Try to open the file specified.
+ if ( ! (out = _wfopen ( FileName, L"wb" )) )
+      return 0;
+
+ //Count the number of nodes in the linked list that we need to write out.
+ ListLength = this ->CountListNodes (  );
+
+ //Write out the number of nodes that we're saving to the file.
+ fwrite ( &ListLength, sizeof ( unsigned long ), 1, out );
+
+ //While we still have nodes to write, call the write callback to do so.
+ while ( Enumerate ( &Node ) )
+        {
+         if ( ! WriteCallback ( out, Node ->lpData ) )
+              break;
+        }
+
+ //We're done with the file, close it.
+ fclose ( out );
+
+ return 1;
+}}
+
+/*
+ Loads a generic linked list from a file.
+
+ *This is from the old c-style callback function parameter form.
+*/
+ unsigned char LINKED_LIST_CLASS::LoadList ( unsigned short *FileName, unsigned long StructureSize )
+{{
+ FILE *in = 0;
+ void *pVariableBlock = 0;
+ unsigned long ListLength = 0, i = 0;
+
+ //Try to open the file passed to us.
+ if ( ! (in = _wfopen ( FileName, L"rb" )) )
+      return 0;
+
+ //Read in the number of linked list nodes that were saved to this file.
+ fread ( &ListLength, sizeof ( unsigned long ), 1, in );
+
+ for ( i = 0; i < ListLength; i += 1 )
+      {
+       if ( ! (pVariableBlock = ReadCallback ( in )) )
+            break;
+
+       if ( ! AddNode ( pVariableBlock, StructureSize ) )
+           {
+            free ( pVariableBlock );
+
+            break;
+           }
+      }
+
+ fclose ( in );
+
+ return 1;
 }}
