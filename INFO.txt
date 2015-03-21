@@ -1,0 +1,151 @@
+The point of this generic linked list is to circumvent all of the annoyances and potential bugs that happen
+when recoding a linked list from scratch every time.
+
+Here's some scratch code I quickly jotted out (untested) to explain the time/effort it saves between a freshly
+coded linked list and one constructed of the functions included in this project...
+
+Using the C-code version of the class included in these uploads:
+
+ typdef struct SOME_STRUCT_S
+{
+ unsigned short Name [ 255 ];
+ unsigned short PhoneNumber[ 255 ];
+ unsigned short Address [ 255 ];
+ unsigned long Age;
+ unsigned long HeightInInches;
+ float WeightInPounds;
+
+ SOME_LIST_S *Next;
+} SOME_STRUCT;
+ 
+ unsigned char AddSomeStruct ( LINKED_LIST **Root, unsigned short *Name, unsigned short *PhoneNumber, unsigned short *Address,
+                               unsigned long Age, unsigned long HeightInches, float WeightInPounds )
+{{
+ SOME_STRUCT Struct;
+ memset ( &Struct, 0, sizeof ( SOME_STRUCT ) );
+
+ wcscpy ( Struct .Name, Name );
+ wcscpy ( Struct .PhoneNumber, PhoneNumber );
+ wcscpy ( Struct .Address, Address );
+
+ Struct .Age = Age;
+ Struct .HeightInInches = HeightInInches;
+ Struct .WeightInPounds = WeightInPounds;
+
+ return AddLinkedListNode ( Root, &Struct, sizeof ( SOME_STRUCT ) );
+}}
+
+ void DisplayList ( LINKED_LIST *Root )
+{{
+ SOME_STRUCT *Node = 0;
+ while ( LinkedListEnumerateByVariableBlock ( Root, (void **) &Node ) )
+         wprintf ( L"Name: %s;\r\n" \
+                   L"Phone Number: %s;\r\n" \
+                   L"Address: %s;\r\n" \
+                   L"Height (inches): %ld;\r\n" \
+                   L"Weight (pounds): %f;\r\n\r\n",
+                   Node ->Name, Node ->PhoneNumber,
+                   Node ->Address, Node ->Age,
+                   Node ->HeightInInches, Node ->WeightInPounds );
+}}
+
+ FreeLinkedList ( &List );
+
+
+
+
+
+
+
+This is coding the same linked list functions from scratch, also in C for a fair comparison...
+
+
+
+ typdef struct SOME_STRUCT_S
+{
+ unsigned short Name [ 255 ];
+ unsigned short PhoneNumber[ 255 ];
+ unsigned short Address [ 255 ];
+ unsigned long Age;
+ unsigned long HeightInInches;
+ float WeightInPounds;
+
+ SOME_LIST_S *Next;
+} SOME_STRUCT;
+
+ SOME_STRUCT *NewListNode ( unsigned short *Name, unsigned short *PhoneNumber, unsigned short *Address,
+                        unsigned long Age, unsigned long HeightInches, float WeightInPounds )
+{{
+ SOME_STRUCT *Node = 0;
+ if ( ! (Node = (SOME_STRUCT *) malloc ( sizeof ( SOME_STRUCT ) )) )
+      return 0;
+
+ wcscpy ( Node ->Name, Name );
+ wcscpy ( Node ->PhoneNumber, PhoneNumber );
+ wcscpy ( Node ->Address, Address );
+
+ Node ->Age = Age;
+ Node ->HeightInInches = HeightInInches;
+ Node ->WeightInPounds = WeightInPounds;
+
+ Node ->Next = 0;
+
+ return Node;
+}}
+
+ unsigned char AddListNode ( SOME_STRUCT **Root, unsigned short *Name, unsigned short *PhoneNumber, unsigned short *Address,
+                             unsigned long Age, unsigned long HeightInches, float WeightInPounds )
+{{
+ SOME_STRUCT *Node = (*Root);
+
+ if ( ! (*Root) )
+     {
+      if ( (*Root) = NewListNode ( unsigned short *Name, unsigned short *PhoneNumber, unsigned short *Address,
+                                  unsigned long Age, unsigned long HeightInches, float WeightInPounds ) )
+           return 1;
+
+      return 0;
+     }
+
+ while ( Node ->Next )
+         Node = Node ->Next;
+
+ if ( Node ->Next = NewListNode ( unsigned short *Name, unsigned short *PhoneNumber, unsigned short *Address,
+                                  unsigned long Age, unsigned long HeightInches, float WeightInPounds ) )
+      return 1;
+
+ return 0;
+}}
+
+ void DisplayList ( SOME_STRUCT *Root )
+{{
+ SOME_STRUCT *Node = Root;
+
+ while ( Node )
+        {
+         wprintf ( L"Name: %s;\r\n" \
+                   L"Phone Number: %s;\r\n" \
+                   L"Address: %s;\r\n" \
+                   L"Height (inches): %ld;\r\n" \
+                   L"Weight (pounds): %f;\r\n\r\n",
+                   Node ->Name, Node ->PhoneNumber,
+                   Node ->Address, Node ->Age,
+                   Node ->HeightInInches, Node ->WeightInPounds );
+
+         Node = Node ->Next;
+        }
+}}
+
+ void FreeList ( SOME_STRUCT **Root )
+{{
+ SOME_STRUCT *Next = (*Root), *Free = 0;
+
+ while ( Next )
+        {
+         Free = Next;
+         Next = Next ->Next;
+
+         free ( Free );
+        }
+ (*Root) = 0;
+}}
