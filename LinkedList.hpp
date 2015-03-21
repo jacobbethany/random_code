@@ -86,6 +86,12 @@
  //This callback function should return a long from the variable block.
  typedef long (*LongFromVariableBlockCallback)(void*lpVariableBlock);
 
+ //This callback function is called for each node in a linked list as the list is being saved to a file.
+ typedef void (*LinkedListWriteCallback)(FILE*,void*lpData);
+
+ //This callback function is called for each node in a linked list that was saved to a file, as the list is being read.
+ typedef void *(*LinkedListReadCallback)(FILE*);
+
  //tested and works.
 
  //Complex
@@ -111,6 +117,9 @@
  virtual unsigned short *LINKED_LIST_CLASS::GetAlphaSortStringFromVariableBlock ( void *lpVariableBlock );
  virtual unsigned char LINKED_LIST_CLASS::GetSortLongFromVariableBlock ( void *lpVariableBlock, long *outLong );
  virtual unsigned char LINKED_LIST_CLASS::UniqueCompareCallback ( void *lpVariableBlock1, void *lpVariableBlock2 );
+
+ virtual unsigned char LINKED_LIST_CLASS::WriteCallback ( FILE *out, void *lpData ); //return 0 on failure of some kind.
+ virtual void *LINKED_LIST_CLASS::ReadCallback ( FILE *in ); //return (void*) 0 on failure of some kind.
 
  //Sorting callbacks.
  //unsigned short *GetStringCallback ( void *lpComplexRegion ); //Your callback that returns a string from the complex region.
@@ -159,8 +168,14 @@
  void LINKED_LIST_CLASS::LongSortEx ( LongFromVariableBlockCallback Callback );
 
  unsigned long LINKED_LIST_CLASS::GetUnicodeStringSize ( unsigned short *String );
+ unsigned long LINKED_LIST_CLASS::CountListNodes ( void );
+
+ //Experimental:
+ unsigned char LINKED_LIST_CLASS::SaveListEx ( unsigned short *FileName, LinkedListWriteCallback SomeWriteCallback );
+ unsigned char LINKED_LIST_CLASS::LoadListEx ( unsigned short *FileName, unsigned long StructureSize, LinkedListReadCallback SomeReadCallback );
+
+ unsigned char LINKED_LIST_CLASS::LoadList ( unsigned short *FileName, unsigned long StructureSize );
+ unsigned char LINKED_LIST_CLASS::SaveList ( unsigned short *FileName );
 };
- //experimental
- //Nothing untested currently.
 
 #endif
