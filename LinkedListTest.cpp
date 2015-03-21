@@ -10,7 +10,7 @@
  make it comply with the new naming convention... (Nothing has changed
  in the class code though, since the testing).
 
- Last Update: Wednesday, March 18, 2015 @ 10:49 PM PST
+ Last Update: Friday, March 20, 2015 @ 8:58 PM PST
 */
  #include "LinkedList.hpp"
 
@@ -70,6 +70,35 @@
  *outLong = sr ->Number;
 
  return 1;
+}}
+
+/*
+  This is a callbackfunction to tell the generic linked list class
+ what to do for each node while writing to a file.
+*/
+ unsigned char WriteCallback ( FILE *out, void *lpVariableBlock )
+{{
+ SIMPLE_REGION *Node = (SIMPLE_REGION *) lpVariableBlock;
+
+ fwrite ( lpVariableBlock, sizeof ( SIMPLE_REGION ), 1, out );
+
+ return 1;
+}}
+
+/*
+  This is a callbackfunction to tell the generic linked list class
+ what to do for each node while reading from a file.
+*/
+ void *ReadCallback ( FILE *in )
+{{
+ SIMPLE_REGION *Node = 0;
+ if ( ! (Node = (SIMPLE_REGION *) malloc ( sizeof ( SIMPLE_REGION ) ) ))
+      return 0;
+
+ memset ( Node, 0, sizeof ( SIMPLE_REGION ) );
+ fread ( Node, sizeof ( SIMPLE_REGION ), 1, in );
+
+ return Node;
 }}
 
 /*
@@ -629,8 +658,78 @@
  cls = 0;
 }}
 
+ void SimpleWriteCallback ( FILE *out, void *lpVariableBlock )
+{{
+ SIMPLE_REGION *Node = (SIMPLE_REGION *) lpVariableBlock;
+
+ fwrite ( lpVariableBlock, sizeof ( SIMPLE_REGION ), 1, out );
+}}
+
+ void *SimpleReadCallback ( FILE *in )
+{{
+ SIMPLE_REGION *Node = 0;
+ if ( ! (Node = (SIMPLE_REGION *) malloc ( sizeof ( SIMPLE_REGION ) ) ))
+      return 0;
+
+ memset ( Node, 0, sizeof ( SIMPLE_REGION ) );
+ fread ( Node, sizeof ( SIMPLE_REGION ), 1, in );
+
+ return Node;
+}}
+
+/*
+ Test to see if we can write a linked list to a file generically
+ with subclassed callbacks for each node or with passed function
+ parameter callbacks for each node.
+
+ Both tests worked; the code for c-style function callback as parameters
+ was ported back to the c-version of this code.
+*/
+ void Test7 ( void )
+{{
+ SimpleListClass *cls = new SimpleListClass (  );
+
+ cls ->AddSimpleNode ( L"Zero", 0 );
+ cls ->AddSimpleNode ( L"One", 1 );
+ cls ->AddSimpleNode ( L"Two", 2 );
+
+ cls ->DisplaySimpleList ( L"Simple list to save to a file:\r\n" );
+
+ //Works fine...
+ cls ->SaveList ( L"Test.txt" );
+ //cls ->SaveListEx ( L"Test.txt", SimpleWriteCallback );
+
+ cls ->Free (  );
+
+ delete cls;
+ cls = 0;
+}}
+
+/*
+ Test to see if we can read a linked list from a file generically
+ with subclassed callbacks for each node or with passed function
+ parameter callbacks for each node.
+
+ Both tests worked; the code for c-style function callback as parameters
+ was ported back to the c-version of this code.
+*/
+ void Test8 ( void )
+{{
+ SimpleListClass *cls = new SimpleListClass (  );
+
+ //Works fine...
+ //cls ->LoadListEx ( L"Test.txt", sizeof ( SIMPLE_REGION ), SimpleReadCallback );
+ cls ->LoadList ( L"Test.txt", sizeof ( SIMPLE_REGION ) );
+
+ cls ->DisplaySimpleList ( L"Simple list that was loaded from a file:\r\n" );
+
+ cls ->Free (  );
+ delete cls;
+ cls = 0;
+}}
+
  //Call some test function to ensure stability of this LinkedList class.
  void main ( void )
 {{
- Test6 (  );
+ Test8 (  );
 }}
