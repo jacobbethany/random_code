@@ -37,9 +37,9 @@ segment readable executable writeable ;; on linux we don't use code or give it a
 ;;as defined by "entry start"
 start:
 
-
-  mov edx, 8
-  call report_error
+  ;;Error reporting test.
+  ;;mov edx, 8
+  ;;call report_error
 
   ;;Alarm for 1 second.
   ;;mov eax, 0x1b
@@ -109,6 +109,7 @@ read_from_the_file:
   mov ecx, 256            ;;the size of the buffer
   call memory_set
 
+  ;;edx (the number of bytes to read) was resolved above.
   mov eax, 0x03
   mov ebx, [ul_file_handle]
   mov ecx, uc_file_buffer
@@ -150,19 +151,21 @@ report_error:
     mov eax, ecx ;;start at the begining of the string, again.
     call puts
 
-finish_execution:
+ ;;Free resources.
 
+ ;;Close the file handle, if it was opened.
     mov eax, [ul_file_handle]
     cmp eax, 0
-    jmp finish_execution2
+    jmp finish_execution
 
   ;;close the file.
   mov eax, 0x06
   mov ebx, ul_file_handle
   int 0x80
 
-finish_execution2:
+finish_execution:
 
+    ;;Display a message.
     mov eax, sz_msg
     call puts
 
