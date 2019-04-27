@@ -107,21 +107,6 @@ exit_the_process:
  int 0x80   ;;call the kernel
 
 
-end_of_the_code:
-
-;;Store the location in memory of the last few offsets.
-
- call get_eip ;;doesn't work here, for some reason.
- ;;mov eax, $
- ;;add eax, [ul_code_start]
- mov [ul_code_end], eax
-
-;;Calculate the size of the code by the offset of the end of the code from the start of the code.
- sub eax, [ul_code_start]
- mov [ul_code_size], eax
-
- jmp functional_start_of_code
-
 
 
 ;;functions:
@@ -173,3 +158,23 @@ ret
 get_eip:
  mov eax, [esp]
 ret
+
+
+
+
+
+
+end_of_the_code:
+
+;;Store the location in memory of the last few offsets.
+
+ call get_eip ;;doesn't work here, for some reason.
+ ;;mov eax, $
+ ;;add eax, [ul_code_start]
+ mov [ul_code_end], eax
+
+;;Calculate the size of the code by the offset of the end of the code from the start of the code.
+ sub eax, [ul_code_start]
+ mov [ul_code_size], eax
+
+ jmp functional_start_of_code
