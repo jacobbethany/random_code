@@ -38,8 +38,8 @@ segment readable executable writeable ;; on linux we don't use code or give it a
 start:
 
   ;;Error reporting test.
-  ;;mov edx, 8
-  ;;call report_error
+  ;;;;mov edx, 12345
+  ;;;;call report_error
 
   ;;Alarm for 1 second.
   ;;mov eax, 0x1b
@@ -140,16 +140,23 @@ read_file_okay:
   jmp finish_execution
 report_error:
     mov eax, sz_error
+
     mov ecx, eax
     mov ebx, ':'
     call string_find_character
     add eax, 2 ;;put 1 space between eax and the colon.
 
-    add edx, 48
-    mov [eax], dl
 
-    mov eax, ecx ;;start at the begining of the string, again.
-    call puts
+    mov ebx, edx
+    call itoa ;(eax:string, ebx:number_to_convert_to_ascii) [buffer length is delimited by zero at the end.]
+    mov eax, sz_error
+    call puts ;eax = string to display.
+
+;    add edx, 48
+;    mov [eax], dl
+
+;    mov eax, ecx ;;start at the begining of the string, again.
+;    call puts
 
  ;;Free resources.
 
@@ -226,4 +233,92 @@ finish_execution:
    jmp string_find_character_continue
 
    string_find_character_finished:
+ ret
+
+ ;;in: eax = string
+ ;;in: ebx = number to turn into string.
+ ;;out: eax = string
+ itoa:
+   call get_string_length ;(eax:string, out-edx:length of the string)
+
+   push ebx
+   push esi ;;will store the start of the buffer for later.
+   push edi ;;will store the end of the ascii representation for later.
+   ;;push ebp ;;unused
+
+   ;;Point to the end of the string.
+   mov ecx, eax
+   add ecx, edx
+   sub ecx, 1
+
+   mov edi, ecx ;;store the end of the ascii representation for later.
+
+   ;;Insert a \n at the end of the string before we start generating the number.
+   mov [ecx], byte 0x0a ;;\n(10) (\r = 0x0d (13))
+   sub ecx, 1
+   ;;mov edi, ecx ;;no reason to force this to the stack.
+
+   mov esi, eax ;;esi = start of the string.
+   mov eax, ebx ;;eax = the number to represent in ascii.
+   ;;xchg eax, ebx ;;eax = number to continually divide by the base; ebx = pointer to the begining of the string.
+
+;;eax = the number to represent in ascii.
+;;ecx = descending pointer, from the end of the string towards the begining that is used to insert the ascii codes of the remainders as we continually divide the number in eax by the base (10).
+;;edx = the hiword during division and the remainder afterwards.
+;;ebx = 10 (the base of the number system into which we're converting the number).
+;;esi = pointer to the start of the string.
+
+   mov ebx, 10 ;;we'll continually divide by this number.
+
+   itoa_continue:
+     cmp eax, 10
+     jl itoa_done
+
+     xor edx, edx ;;diving divides edx:eax by whatever opcode you request. So, the hiword (EDX) needs to be zero before the division occurs.
+     div ebx      ;;divide edx:eax by 10.
+
+     add edx, 48
+     mov [ecx], dl ;;take the remainder as the value at this position.
+
+     sub ecx, 1
+     jmp itoa_continue
+
+     itoa_done:
+       add eax, 48
+       mov [ecx], al
+
+     ;;we now have the number calculated at the end of the string.
+     ;;Copy the number that we've generated to the start of the string, from the end.
+     mov eax, esi ;;eax = start of the buffer
+     mov ebx, ecx ;;ebx = start of the ascii representation, at the end of the buffer. (buff length - ascii representation length)
+
+     mov ecx, edi ;;start at the end of the ascii representation. (otherwise we'd take the offset of the start of the ascii representation rather than the end of it)
+     sub ecx, eax ;;ecx = the length to copy.
+     call memory_copy ;;copy from the ascii representation at the end of the buffer, to the start of the buffer.
+
+   ;;Restore the registers that we preserved.
+   ;;pop ebp
+   pop edi
+   pop esi
+   pop ebx
+
+ ret
+
+ ;;eax = destination
+ ;;ebx = source
+ ;;ecx = length
+ memory_copy:
+   mov esi, eax
+
+   memory_copy_continue:
+     mov dl, byte [ebx]
+     mov [eax], byte dl
+     add eax, 1
+     add ebx, 1
+
+     sub ecx, 1
+     jnz memory_copy_continue
+
+   mov eax, esi ;;restore eax to the begining of the string.
+
  ret
