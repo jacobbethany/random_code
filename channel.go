@@ -36,6 +36,7 @@
 */
 package main
 import "fmt"; //for displaying text in stdout.
+import "os"; //for returning a value from the main function for the OS to interpret as an error code.
 //import "regexp";
 import "time"; //for sleep
 import "strings"; //for strings.Compare (works like strcmp)
@@ -70,7 +71,10 @@ func some_thread ( messages chan string ) {
 
 func main ( ) {
 
+ //There is no need to make an array of 100 strings, since it queues each string inserted into the channel for each contiguous read to remove.
  //messages := make ( chan string, 100 ) //we'll have 100 of these strings in the channel.
+
+ //This is the way to do it, since it queues each item that is added to the channel to be "popped out" during each read.
  messages := make ( chan string ) //see if setting the channel to the same string multiple times concatenates or crashes.
 
  //Using the Go keyword here will run this function concurrently by starting a new thread and continuing the execution of the current function in this current thread.
@@ -90,10 +94,25 @@ func main ( ) {
  }
 
  //Simulate a while loop, since it dosen't seem to exist in Golang.
- for i := 0; true; i ++ {
+// for i := 0; true; i ++ {
+//Apparently, some parameters of a for loop can be ommitted in Golang to simulate a while loop.
+/*
+ for true {
      if ( 0 == strings.Compare ( "done", <- messages ) ) {
           break;
      }
  }
+*/
+
+ //Interestingly, because reading from a channel breaks the concurrency by locking the requesting thread until there's something to read, we can just do this:
+ if ( 0 == strings.Compare ( "done", <- messages ) ) {
+      fmt.Printf ( "The worker thread finished its execution, successfully.\n" );
+      os.Exit ( 0 ); //successful termination.
+ }
+
+
+ //If we're still executing, then we had an unexpected result.
+ fmt.Printf ( "The worker thread returned an unexpected value.\n" );
+ os.Exit ( 1 ); //Unsuccessful termination.
 
 } //end of main function.
