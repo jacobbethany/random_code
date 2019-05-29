@@ -16,7 +16,8 @@
        printf ( "Thread test...\n" );
  }
 
- *((unsigned char *) thread_information) = 0;
+ //It's actually possible that this thread starts and finishes before the main thread realizes that it ever started.
+ //*((unsigned char *) thread_information) = 0;
 
  return 0;
 }}
