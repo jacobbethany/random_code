@@ -5,16 +5,35 @@
 */
  require_once "permutator.php";
 
- $whole_array = array ( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 );
+//This will break it.
+// $whole_array = array ( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 );
+ $whole_array = array ( 1, 2, 3, 4, 5 );
+
+
+
+ //echo is_permutation ( array ( 1, 2, 3 ), array ( 3, 1, 2 ) ) . "\n";
 
  $sum_subsets = find_sum_in_permutations ( $whole_array, 12 );
  var_dump ( $sum_subsets );
+/*
+ $redundant_array = array ( array ( 1, 2, 3 ),
+                            array ( 1, 3, 2 ),
+                            array ( 3, 1, 2 ),
+                            array ( 3, 2, 1 ),
+                            array ( 2, 1, 3 ),
+                            array ( 2, 3, 1 )
+                          );
+var_dump ( $redundant_array );
+ get_unique_combinations ( $redundant_array );
+var_dump ( $redundant_array );
+*/
 
  function find_sum_in_permutations ( $ary, $sum )
 {{
  $permutations = calculate_permutations ( $ary, $permutations, 0 );
 // var_dump ( $permutations );
 //return ;
+
  $sum_subsets = array (  );
  $length = count ( $permutations [ 0 ] ); //they'll all be the same length, since they're just re-orderings.
  foreach ( $permutations as $permutation )
@@ -24,7 +43,12 @@
                 {
                  $total += $permutation [ $i ];
                  if ( $total == $sum )
-                      $sum_subsets [ implode ( ',', get_array_segment ( $permutation, 0, $i ) ) ] = 1;
+                     {
+                      $sub_array = get_array_segment ( $permutation, 0, $i );
+                      sort ( $sub_array ); //so that the key will be unique AND only belong to one permutation.
+                      $sum_subsets [ implode ( ',', $sub_array ) ] = 1;
+                      break;
+                     }
                 }
           }
 
@@ -35,6 +59,9 @@
            $final_subsets [] = explode ( ",", $k );
           }
 
+
+// echo count ( $permutations ) . "\n\n";
+//return array();
  return $final_subsets;
 }}
 
@@ -53,6 +80,5 @@
           }
  return $ary;
 }}
-
 
 ?>
