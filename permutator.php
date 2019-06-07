@@ -16,6 +16,11 @@
  Note: The keys of the associative array are used to ensure that all members are unique.
 
  This has been tested with array lengths of 3 and 4, so far.
+
+ Note: This works only up to arrays of length 5. I'd probably have to increase the depth a bit.
+ I'm not sure how to determine by how much the depth would need to increase, mathematically speaking.
+ Clearly, I wouldn't want to start on each mutation infinitely, though.
+ I might return to this later.
 */
 
  $ary = array ( 'a', 'b', 'c', 'd', 'e' );
