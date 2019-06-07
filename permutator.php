@@ -17,19 +17,45 @@
 
  This has been tested with array lengths of 3 and 4, so far.
 
- Note: This works only up to arrays of length 5. I'd probably have to increase the depth a bit.
- I'm not sure how to determine by how much the depth would need to increase, mathematically speaking.
- Clearly, I wouldn't want to start on each mutation infinitely, though.
- I might return to this later.
+ Note: The depth requirement was solved by checking the count and increasing it until it was equal to arraylength factorial.
 */
 
- $ary = array ( 'a', 'b', 'c', 'd', 'e' );
+ //$ary = array ( 'a', 'b', 'c', 'd', 'e' );
+/*
+ $ary = array ( 1, 2, 3, 4, 5, 6, 7, 8 );
  $permutations = array (  );
- //calculate_permutations ( $ary, $permutations, 0 );
+ $permutations = calculate_permutations ( $ary, $permutations, 0 );
+ echo "Total permutations: " . count ( $permutations ) . ".\n";
+*/
+/*
+ $ary = array ( 1, 2, 3, 4, 5 );
+ $permutations = array (  );
+ $permutations = calculate_permutations ( $ary, $permutations, 0 );
+ echo "Total permutations: " . count ( $permutations ) . ".\n";
+*/
 
+//Usage:
+// $permutations = array (  ); //just start with an empty array.
+// $permutations = calculate_permutations ( array ( 1, 2, 3, 4, 5, ...etc. ), $permutations, 0 );
  function calculate_permutations ( $ary, &$current_permutations, $depth )
 {{
- if ( $depth > 1 )
+ $required_depth = array ( 0 => 1,
+                           1 => 1,
+                           2 => 1,
+                           3 => 1,
+                           4 => 1,
+                           5 => 1,
+                           6 => 2,
+                           7 => 3,
+                           8 => 5
+                         );
+ $array_length = count ( $ary );
+ if ( empty ( $required_depth [ $array_length ] ) )
+      $depth_limit = 5; //just arbitrarily pick 5, since it's already getting slow.
+ else $depth_limit = $required_depth [ $array_length ];
+
+ //It'd be good to figure out a way to determine what the depth needs to be, programmatically.
+ if ( $depth > $depth_limit ) //1 works for 5; 2 works for 6; 3 works for 7; 5 for 8.
       return;
 
  $length = count ( $ary );
