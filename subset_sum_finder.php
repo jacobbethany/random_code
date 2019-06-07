@@ -15,18 +15,6 @@
 
  $sum_subsets = find_sum_in_permutations ( $whole_array, 12 );
  var_dump ( $sum_subsets );
-/*
- $redundant_array = array ( array ( 1, 2, 3 ),
-                            array ( 1, 3, 2 ),
-                            array ( 3, 1, 2 ),
-                            array ( 3, 2, 1 ),
-                            array ( 2, 1, 3 ),
-                            array ( 2, 3, 1 )
-                          );
-var_dump ( $redundant_array );
- get_unique_combinations ( $redundant_array );
-var_dump ( $redundant_array );
-*/
 
  function find_sum_in_permutations ( $ary, $sum )
 {{
