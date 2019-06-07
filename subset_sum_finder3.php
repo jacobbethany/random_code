@@ -1,6 +1,6 @@
 <?php
 /*
- Code written on 2019_06_06 by Jacob Bethany.
+ Code written on 2019_06_07 by Jacob Bethany.
  Purpose: I wanted to take my bit mask idea from yesterday and allow it to be used for arrays of any size.
  So, I made an "array mask" of the original array.
  Each element of the mask has the same relative index
