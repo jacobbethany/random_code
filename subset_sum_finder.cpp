@@ -1,5 +1,5 @@
 /*
- Code written on 2019_06_06 by Jacob Bethany.
+ Code written on 2019_06_07 by Jacob Bethany.
  This is an equivalent to the subset_sum_finder3.php script that I wrote earlier today,
  but written in c. I usee the cpp extension for compilation reasons, on Linux.
  This takes a char * array of the same length as the uint32_t array of values and uses
