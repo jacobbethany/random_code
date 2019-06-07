@@ -18,9 +18,9 @@
  This has been tested with array lengths of 3 and 4, so far.
 */
 
- $ary = array ( 'a', 'b', 'c', 'd' );
+ $ary = array ( 'a', 'b', 'c', 'd', 'e' );
  $permutations = array (  );
- calculate_permutations ( $ary, $permutations, 0 );
+ //calculate_permutations ( $ary, $permutations, 0 );
 
  function calculate_permutations ( $ary, &$current_permutations, $depth )
 {{
@@ -81,7 +81,15 @@
 
  //Only show the results, if this is the first function call that was made.
  if ( ! $depth )
-      var_dump ( array_keys ( $current_permutations ) );
+     {
+      $permutations = array (  );
+      foreach ( $current_permutations as $permutation_string => $v )
+                $permutations[] = explode ( ",", $permutation_string );
+      //return array_keys ( $current_permutations );
+      //var_dump ( array_keys ( $current_permutations ) );
+      return $permutations;
+     }
+
 }}
 
  function rotate_array ( &$ary )
