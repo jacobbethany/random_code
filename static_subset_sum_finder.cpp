@@ -107,13 +107,41 @@
  printf ( "\n" );
 }}
 
+ void sort_array ( uint32_t *ul_array, uint32_t ul_length )
+{{
+ unsigned char b_something_was_swapped;
+ uint32_t ul_tmp, i;
+
+ if ( ul_length < 2 )
+      return ;
+
+ do
+   {
+    b_something_was_swapped = 0;
+    for ( i = 0; i < ul_length - 1; i ++ )
+         {
+          if ( ul_array [ i ] > ul_array [ i + 1 ] )
+              {
+               ul_tmp = ul_array [ i + 1 ];
+               ul_array [ i + 1 ] = ul_array [ i ];
+               ul_array [ i ] = ul_tmp;
+               b_something_was_swapped = 1;
+              }
+         }
+   } while ( b_something_was_swapped );
+}}
+
  int main ( int argc, char *argv[] )
 {{
  uint32_t ul_required_value = 12;
- uint32_t ul_array [  ] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+ //uint32_t ul_array [  ] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+ uint32_t ul_array [  ] = { 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 };
  const uint32_t ul_array_length = sizeof(ul_array)/sizeof(uint32_t);
  char lp_mask [ ul_array_length ] = { 0 };
  uint32_t ul_total_matches = 0;
+
+ sort_array ( (uint32_t *) ul_array, ul_array_length  );
+ //show_array_mask ( (char *) ul_array, ul_array_length<<2 );
 
  //Keep looping until we wrap back around to all zeros (overflow).
  do
