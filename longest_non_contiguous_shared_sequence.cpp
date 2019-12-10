@@ -38,6 +38,11 @@
  printf ( "\n" );
 }}
 
+ unsigned char is_letter_digit_or_space ( char c )
+{{
+ return ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || strchr ( " \t\r\n.", c ) );
+}}
+
 /*
  This will find the longest non-contiguous shared sequence between the two arrays.
  A reference to mask used to find this sequence will be returned in out_lpuc_longest_mask.
@@ -101,7 +106,7 @@
       ul_array1_length = ul_array2_length;
       ul_array2_length = ul_temp_length;
 
-      unsigned char *lpuc_temp_array;
+      unsigned char *lpuc_temp_array = lpuc_array2;
       lpuc_array2 = lpuc_array1;
       lpuc_array1 = lpuc_temp_array;
      }
@@ -131,7 +136,8 @@
  //For every possible combination of mask values of the shorter array.
  for ( unsigned long ul_mask_iterator = 0; ul_mask_iterator < 1<<ul_array1_length; ul_mask_iterator ++ )
       {
-       printf ( "We're incrementing the mask (%d) before we continue checking anything.\n", ul_mask_iterator );
+       if ( ! (ul_mask_iterator % (1024*1024)) )
+            printf ( "We're incrementing the mask (%d) before we continue checking anything.\n", ul_mask_iterator );
 
        increment_array_mask ( lpuc_mask, ul_array1_length );
        unsigned long ul_current_subsequence_length = 0;
@@ -149,15 +155,26 @@
              if ( ! lpuc_mask [ ul_shorter_array_iterator ] )
                   continue;
 
-             printf ( "Persuant to the aformentioned array mask, we're going to attempt to match the current associated character of the shorter of the arrays, [%c].\n",
-                      lpuc_array1 [ ul_shorter_array_iterator ]
-             );
+/*
+             if ( is_letter_digit_or_space ( lpuc_array1 [ ul_shorter_array_iterator ] ) )
+                 {
+                  printf ( "Persuant to the aformentioned array mask, we're going to attempt to match the current associated character of the shorter of the arrays, [%c].\n",
+                           lpuc_array1 [ ul_shorter_array_iterator ]
+                  );
+                 }
+             else
+                 {
+                  printf ( "Persuant to the aformentioned array mask, we're going to attempt to match the current associated character of the shorter of the arrays, [%d].\n",
+                           lpuc_array1 [ ul_shorter_array_iterator ]
+                  );
+                 }
+*/
 
              //For each member after the previous match (if there was one) of the longer array, try to match the short array's current masked element.
              for ( unsigned long ul_longer_array_iterator = uc_matched_something_already ? ul_previous_match_position+1 : 0; ul_longer_array_iterator < ul_array2_length; ul_longer_array_iterator ++ )
                   {
-                   if ( ul_mask_iterator == 45 ) //the pattern that would match it.
-                        printf ( "[%c] =?= [%c]\n", lpuc_array1 [ ul_shorter_array_iterator ], lpuc_array2 [ ul_longer_array_iterator ] );
+                   //if ( ul_mask_iterator == 45 ) //the pattern that would match it.
+                   //     printf ( "[%c] =?= [%c]\n", lpuc_array1 [ ul_shorter_array_iterator ], lpuc_array2 [ ul_longer_array_iterator ] );
 
                    //If we've managed to match the maked element of the shorter array.
                    if ( lpuc_array2 [ ul_longer_array_iterator ] == lpuc_array1 [ ul_shorter_array_iterator ] )
@@ -189,10 +206,17 @@
 
  int main ( int argc, char *argv [  ] )
 {{
- char array1 [  ] = "AGGTAB";
- char array2 [  ] = "GXTXAYB";
+ //char array1 [  ] = "AGGTAB";
+ //char array2 [  ] = "GXTXAYB";
+
+ char array1 [  ] = "This is only a test...";
+ char array2 [  ] = "lkn../Tzxchsdfiwerswer weriwerswer werowernwerlwerywer werawer wertwerewerswertwer.wer.wer.wer";
+
+ //unsigned char array1 [  ] = { 19, 13, 23, 242, 2, 1, 0, 0, 13 };
+ //unsigned char array2 [  ] = { 13, 0, 0 };
+
  unsigned long ul_shortest_array_length = sizeof(array1) <= sizeof(array2) ? sizeof(array1) : sizeof (array2);
- char *lpuc_shortest_array = sizeof(array1) < sizeof(array2) ? array1 : array2;
+ unsigned char *lpuc_shortest_array = sizeof(array1) < sizeof(array2) ? (unsigned char *) array1 : (unsigned char *) array2;
 
  unsigned char *lpuc_mask = 0;
 
@@ -209,10 +233,15 @@
       printf ( "The longest non-contiguous sequence length was %d.\n", ul_longest_common_non_contiguous_sequence_length );
 
       printf ( "Here is the longest non-contiguous common sequence: [" );
-      for ( unsigned long ul_i = 0; ul_i < ul_shortest_array_length; ul_i ++ )
+      for ( unsigned long ul_i = 0; ul_i < ul_longest_common_non_contiguous_sequence_length; ul_i ++ )
            {
             if ( lpuc_mask [ ul_i ] )
-                 printf ( "%c", lpuc_shortest_array [ ul_i ] );
+                {
+                 if ( is_letter_digit_or_space ( lpuc_shortest_array [ ul_i ] ) )
+                      printf ( "%c", lpuc_shortest_array [ ul_i ] );
+                 else
+                      printf ( (ul_i) ? " %d" : "%d", lpuc_shortest_array [ ul_i ] );
+                }
            }
       printf ( "]\n" );
      }
