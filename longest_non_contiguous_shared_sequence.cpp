@@ -233,7 +233,7 @@
       printf ( "The longest non-contiguous sequence length was %d.\n", ul_longest_common_non_contiguous_sequence_length );
 
       printf ( "Here is the longest non-contiguous common sequence: [" );
-      for ( unsigned long ul_i = 0; ul_i < ul_longest_common_non_contiguous_sequence_length; ul_i ++ )
+      for ( unsigned long ul_i = 0; ul_i < ul_shortest_array_length; ul_i ++ )
            {
             if ( lpuc_mask [ ul_i ] )
                 {
