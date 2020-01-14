@@ -105,7 +105,7 @@
  unsigned char custom_vector_iterator<T>::decrement_iterator ( void )
 {{
  //If we're already on the first node of the vector, don't try to decrement.
- if ( ! this ->ul_offset )
+ if ( ! this ->m_ul_offset )
       return 0;
 
  this ->m_iterator = this ->m_vector_reference ->begin (  ) + this ->m_ul_offset - 1;
@@ -154,6 +154,9 @@
     //printf ( "Here's the number: [%d].\n", *(it .get (  )) );
     printf ( "Here's the number: [%d].\n", *it );
    } while ( ++it );
+
+ while ( --it )
+         printf ( "Reverse: [%d].\n", *it );
 
  //delete it;
 
