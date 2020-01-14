@@ -147,18 +147,32 @@
  for ( unsigned char uc_i = 0; uc_i < 10; uc_i ++ )
        number_vector .push_back ( uc_i );
 
- custom_vector_iterator<unsigned char> it = custom_vector_iterator<unsigned char> ( &number_vector );
- //custom_vector_iterator<unsigned char> *it = new custom_vector_iterator<unsigned char>( &number_vector );
+
+ //Instantiated test:
+ custom_vector_iterator<unsigned char> *it = new custom_vector_iterator<unsigned char>( &number_vector );
  do
    {
-    //printf ( "Here's the number: [%d].\n", *(it .get (  )) );
-    printf ( "Here's the number: [%d].\n", *it );
-   } while ( ++it );
+    //printf ( "Here's the number: [%d].\n", *(it ->get (  )) );
+    printf ( "Here's the number: [%d].\n", *(*it) );
+   } while ( ++(*it) );
 
- while ( --it )
-         printf ( "Reverse: [%d].\n", *it );
+ while ( --(*it) )
+         printf ( "Reverse: [%d].\n", *(*it) );
 
- //delete it;
+ delete it;
+
+
+ //Basic test:
+ custom_vector_iterator<unsigned char> basic_iterator = custom_vector_iterator<unsigned char> ( &number_vector );
+ do
+   {
+    //printf ( "Here's the number: [%d].\n", *(basic_iterator .get (  )) );
+    printf ( "Here's the number: [%d].\n", *basic_iterator );
+   } while ( ++basic_iterator );
+
+ while ( --basic_iterator )
+         printf ( "Reverse: [%d].\n", *basic_iterator );
+
 
  return 0;
 }}
