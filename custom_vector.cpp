@@ -222,6 +222,7 @@
  typename std::vector<T>::reverse_iterator rend ( void );
 
  typename std::vector<T> *get_vector ( void );
+ typename std::vector<T> *operator* ( void ); //this is the dereference overload (*custom_vector) it returns the vector that this class stores.
 
  void show_safety_node ( void );
 };
@@ -455,6 +456,12 @@
  return &this ->m_vector;
 }}
 
+ template<class T>
+ typename std::vector<T> *custom_vector<T>::operator* ( void )
+{{
+ return &this ->m_vector;
+}}
+
  int main ( int argc, char **argv )
 {{
  custom_vector<char> v;
@@ -503,7 +510,7 @@
  //Show that we set custom_vector::m_safety_node to 'z'.
  v .show_safety_node (  );
 
- printf ( "" );
+ printf ( "\n" );
  for ( std::vector<char>::reverse_iterator it = v .rbegin (  ); it != v .rend (  ); it ++ )
       {
        printf ( "%c", *it );
@@ -515,7 +522,7 @@
        printf ( "Test: [%c]\n", *it );
 
  printf ( "\n" );
- for ( custom_vector_iterator<char> it ( v .get_vector (  ) ); it ++; )
+ for ( custom_vector_iterator<char> it ( *v ); it ++; )
        printf ( "Test: [%c]\n", *it );
 
  //custom_vector_iterator_test (  );
