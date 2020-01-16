@@ -38,6 +38,9 @@
  unsigned char increment_iterator ( void );
  unsigned char decrement_iterator ( void );
 
+ unsigned char operator== ( typename std::vector<T>::iterator comparator );
+ unsigned char operator!= ( typename std::vector<T>::iterator comparator );
+
  unsigned char operator++ (  ); //custom_vector_iterator::++ prefix
  unsigned char operator-- (  ); //custom_vector_iterator::-- prefix
  unsigned char operator++ ( int dummy ); //custom_vector_iterator::++ postfix
@@ -177,6 +180,18 @@
  unsigned char custom_vector_iterator<T>::operator-- ( int dummy ) //custom_vector_iterator::-- postfix
 {{
  this ->decrement_iterator (  );
+}}
+
+ template<class T>
+ unsigned char custom_vector_iterator<T>::operator== ( typename std::vector<T>::iterator comparator )
+{{
+ return this ->m_iterator == comparator;
+}}
+
+ template<class T>
+ unsigned char custom_vector_iterator<T>::operator!= ( typename std::vector<T>::iterator comparator )
+{{
+ return this ->m_iterator != comparator;
 }}
 //////end of the custom_vector_iterator
 
@@ -518,11 +533,11 @@
  printf ( "\n" );
 
  //Same as custom_vector_iterator<char> it = custom_vector_iterator<char> ( v .get_vector (  ) );
- for ( custom_vector_iterator<char> it ( v .get_vector (  ) ); ++ it; )
+ for ( custom_vector_iterator<char> it ( v .get_vector (  ) ); it != v .end (  ); ++ it )
        printf ( "Test: [%c]\n", *it );
 
  printf ( "\n" );
- for ( custom_vector_iterator<char> it ( *v ); it ++; )
+ for ( custom_vector_iterator<char> it ( *v ); it != v .end (  ); it ++ )
        printf ( "Test: [%c]\n", *it );
 
  //custom_vector_iterator_test (  );
