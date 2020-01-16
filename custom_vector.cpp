@@ -38,8 +38,11 @@
  unsigned char increment_iterator ( void );
  unsigned char decrement_iterator ( void );
 
+ //Allow for comparing this class with its contained vector<T>::iterator type.
  unsigned char operator== ( typename std::vector<T>::iterator comparator );
  unsigned char operator!= ( typename std::vector<T>::iterator comparator );
+
+ unsigned char operator ! ( void ); //Allow for if ( ! custom_vector_iterator ) to check for validity.
 
  unsigned char operator++ (  ); //custom_vector_iterator::++ prefix
  unsigned char operator-- (  ); //custom_vector_iterator::-- prefix
@@ -192,6 +195,22 @@
  unsigned char custom_vector_iterator<T>::operator!= ( typename std::vector<T>::iterator comparator )
 {{
  return this ->m_iterator != comparator;
+}}
+
+//Note: The logic is a bit wonky for the if statments with this method.
+//We use the ! to check to see whether the iterator is equal to the end node.
+//After that, we use another ! to negate the result and check whether it's not equal to the end.
+//Usage:
+/*
+ for ( custom_vector_iterator<T> vi ( &some_vector_of_type_T ); ! (!vi); vi ++ )
+       ...
+*/
+ template<class T>
+ unsigned char custom_vector_iterator<T>::operator ! ( void ) //Allow for if ( ! custom_vector_iterator ) to check for validity.
+{{
+ if ( this ->m_iterator != this ->m_vector_reference ->end (  ) )
+      return 0;
+ return 1;
 }}
 //////end of the custom_vector_iterator
 
@@ -539,6 +558,12 @@
  printf ( "\n" );
  for ( custom_vector_iterator<char> it ( *v ); it != v .end (  ); it ++ )
        printf ( "Test: [%c]\n", *it );
+ printf ( "\n" );
+
+ printf ( "! operator test.\n" );
+ for ( custom_vector_iterator<char> it ( *v ); !! it; it ++ )
+       printf ( "Test: [%c]\n", *it );
+ printf ( "\n" );
 
  //custom_vector_iterator_test (  );
 
