@@ -2,21 +2,25 @@
  Created on 2020-01-15 by Jacob Bethany
  Purpose: To better familiarize myself with templating within C ++.
 */
- #define USE_LINUX 1
-
  #include "stdio.h"
  #include "stdlib.h"
 
- #if USE_LINUX
+#ifdef __linux__
+
  #include "string.h"
- #else
+
+#elif _WIN32
+
  #include "conio.h"
- #endif
+
+#else
+
+ //Assume that most operating systems conform with Linux's include conventions.
+ #include "string.h"
+
+#endif
 
  #include <vector>
-
-
-
 
 //////start of the custom_vector_iterator
  template<class T>
@@ -156,7 +160,14 @@
  template<class T>
  T& custom_vector_iterator<T>::operator* (  )
 {{
- return *(this ->m_iterator);
+ static T dummy;
+
+ //If we won't return data from the end node.
+ if ( this ->m_iterator != this ->m_vector_reference ->end (  ) )
+      return *(this ->m_iterator);
+
+ //Otherwise, return a reference to a dummy variable.
+ return dummy;
 }}
 
  int custom_vector_iterator_test ( void )
@@ -648,15 +659,16 @@
 
  printf ( "Goto_index test:\n" );
  custom_vector_iterator<char> index_iterator ( *v );
- for ( unsigned long ul_i = 0; ul_i < v .length (  ); ul_i ++ )
+ //We'll intentionally overstep the vector's upper bounds which should give us the .end() node.
+ for ( unsigned long ul_i = 0; ul_i < v .length (  )+21; ul_i ++ )
       {
        index_iterator .goto_index ( ul_i );
        printf ( "This is the character [ %d ]: '%c'\n", ul_i, *index_iterator );
       }
 
  printf ( "! operator test.\n" );
- for ( custom_vector_iterator<char> it ( *v ); !! it; it = v .erase ( it ) ) //custom_vector::erase(custom_vector_iterator<T> &);
  //for ( custom_vector_iterator<char> it ( *v ); !! it; it = v .erase ( it.get_iterator (  ) ) ) //custom_vector::erase(std::vector<T>::iterator)
+ for ( custom_vector_iterator<char> it ( *v ); !! it; it = v .erase ( it ) ) //custom_vector::erase(custom_vector_iterator<T> &);
       {
        printf ( "Test: [%c]\n", *it );
       }
