@@ -23,34 +23,41 @@
  class custom_vector_iterator
 {
  private:
- typename std::vector<T> *m_vector_reference; //The vector_reference.
- typename std::vector<T>::iterator m_iterator; //The current iterator of the list, this ->m_vector_reference.
- unsigned long m_ul_offset = 0;
+   typename std::vector<T> *m_vector_reference; //The vector_reference.
+   typename std::vector<T>::iterator m_iterator; //The current iterator of the list, this ->m_vector_reference.
+   unsigned long m_ul_offset = 0;
 
  public:
 
- custom_vector_iterator ( typename std::vector<T> *vector_through_which_to_iterate );
- ~custom_vector_iterator ( void );
+   custom_vector_iterator ( typename std::vector<T> *vector_through_which_to_iterate );
+   ~custom_vector_iterator ( void );
 
- unsigned char goto_first_iterator ( void );
- unsigned char goto_last_iterator ( void );
+   unsigned char goto_first_iterator ( void );
+   unsigned char goto_last_iterator ( void );
+   typename std::vector<T>::iterator goto_index ( unsigned long ul_offset );
+   void goto_iterator ( typename std::vector<T>::iterator &std_iterator );
 
- unsigned char increment_iterator ( void );
- unsigned char decrement_iterator ( void );
 
- //Allow for comparing this class with its contained vector<T>::iterator type.
- unsigned char operator== ( typename std::vector<T>::iterator comparator );
- unsigned char operator!= ( typename std::vector<T>::iterator comparator );
+   unsigned char increment_iterator ( void );
+   unsigned char decrement_iterator ( void );
 
- unsigned char operator ! ( void ); //Allow for if ( ! custom_vector_iterator ) to check for validity.
+   //Allow for comparing this class with its contained vector<T>::iterator type.
+   unsigned char operator== ( typename std::vector<T>::iterator comparator );
+   unsigned char operator!= ( typename std::vector<T>::iterator comparator );
 
- unsigned char operator++ (  ); //custom_vector_iterator::++ prefix
- unsigned char operator-- (  ); //custom_vector_iterator::-- prefix
- unsigned char operator++ ( int dummy ); //custom_vector_iterator::++ postfix
- unsigned char operator-- ( int dummy ); //custom_vector_iterator::-- postfix
+   unsigned char operator ! ( void ); //Allow for if ( ! custom_vector_iterator ) to check for validity.
+   void operator = ( typename std::vector<T>::iterator std_iterator );
+   void operator = ( custom_vector_iterator<T> custom_iterator );
 
- T& operator* (  ); //this is the dereference overload (*custom_vector_iterator).
- typename std::vector<T>::iterator get ( void );
+   unsigned char operator++ (  ); //custom_vector_iterator::++ prefix
+   unsigned char operator-- (  ); //custom_vector_iterator::-- prefix
+   unsigned char operator++ ( int dummy ); //custom_vector_iterator::++ postfix
+   unsigned char operator-- ( int dummy ); //custom_vector_iterator::-- postfix
+
+   //This gets a reference to the value to which this iterator points so that it can be manipulated
+   //instead of the iterator.
+   T& operator* (  ); //this is the dereference overload (*custom_vector_iterator).
+   typename std::vector<T>::iterator get_iterator ( void ); //get the current iterator so that it can be modified instead of the contents to which it points.
 };
 
  template<class T>
@@ -77,8 +84,24 @@
  unsigned char custom_vector_iterator<T>::goto_last_iterator ( void )
 {{
  //This this safe for a list of size zero?
- this ->m_iterator = this ->m_vector_reference .end (  ) - 1;
- this ->m_ul_offset = this ->m_vector_reference .size (  ) - 1;
+ this ->m_iterator = this ->m_vector_reference ->end (  ) - 1;
+ this ->m_ul_offset = this ->m_vector_reference ->size (  ) - 1;
+}}
+
+ template<class T>
+ typename std::vector<T>::iterator custom_vector_iterator<T>::goto_index ( unsigned long ul_offset )
+{{
+ if ( ul_offset > this ->m_vector_reference ->size (  ) - 1 )
+      this ->m_iterator = this ->m_vector_reference ->end (  );
+ else this ->m_iterator = this ->m_vector_reference ->begin (  ) + ul_offset;
+
+ return this ->m_iterator;
+}}
+
+ template<class T>
+ void custom_vector_iterator<T>::goto_iterator ( typename std::vector<T>::iterator &std_iterator )
+{{
+ this ->m_iterator = std_iterator;
 }}
 
 //Usage: if ( custom_vector_iterator::increment_iterator (  ) ) use_the_iterator (  );
@@ -125,7 +148,7 @@
 }}
 
  template<class T>
- typename std::vector<T>::iterator custom_vector_iterator<T>::get ( void )
+ typename std::vector<T>::iterator custom_vector_iterator<T>::get_iterator ( void )
 {{
  return this ->m_iterator;
 }}
@@ -148,7 +171,7 @@
  custom_vector_iterator<unsigned char> *it = new custom_vector_iterator<unsigned char>( &number_vector );
  do
    {
-    //printf ( "Here's the number: [%d].\n", *(it ->get (  )) );
+    //printf ( "Here's the number: [%d].\n", *(it ->get_iterator (  )) );
     printf ( "Here's the number: [%d].\n", *(*it) );
    } while ( ++(*it) );
 
@@ -162,7 +185,7 @@
  custom_vector_iterator<unsigned char> basic_iterator = custom_vector_iterator<unsigned char> ( &number_vector );
  do
    {
-    //printf ( "Here's the number: [%d].\n", *(basic_iterator .get (  )) );
+    //printf ( "Here's the number: [%d].\n", *(basic_iterator .get_iterator (  )) );
     printf ( "Here's the number: [%d].\n", *basic_iterator );
    } while ( ++basic_iterator );
 
@@ -212,6 +235,18 @@
       return 0;
  return 1;
 }}
+
+ template<class T>
+ void custom_vector_iterator<T>::operator = ( typename std::vector<T>::iterator std_iterator )
+{{
+ this ->m_iterator = std_iterator;
+}}
+
+ template<class T>
+ void custom_vector_iterator<T>::operator = ( custom_vector_iterator<T> custom_iterator )
+{{
+ this ->m_iterator = custom_iterator .get_iterator (  );
+}}
 //////end of the custom_vector_iterator
 
 
@@ -230,21 +265,26 @@
 {
  protected:
  typename std::vector<T> m_vector;
- unsigned long m_ul_size; //Position within the vector of the current iterator.
+ unsigned long m_ul_length; //Position within the vector of the current iterator.
  //T m_safety_node; //This is what will be returned when the subscript overload is used to access an element that is out of bounds.
- void *m_lp_safety_node; //If we are a vector of objects, it's still not safe to allow random data to be written because the destructor will be corupted.
+ unsigned char *m_lp_safety_node; //If we are a vector of objects, it's still not safe to allow random data to be written because the destructor will be corupted.
  //Instead, I've opted to use a block of memory that is equal in size to whatever the type is that this vector is referencing.
 
  public:
  custom_vector (  );
  ~custom_vector (  );
 
- unsigned char insert ( T new_node, unsigned long ul_position );
- unsigned char push_back ( T new_node );
- unsigned char push_front ( T new_node );
- unsigned char erase ( typename std::vector<T>::iterator new_node );
+ //!! TODO: define these methods: length, size.
+ unsigned long length (  ); //gets the number of nodes within the list.
+ unsigned long size (  ); //get the size in bytes of the structures contained within the vector. (equal to custom_vector::size * sizeof ( T ).
 
- unsigned char clear ( void );
+ unsigned char insert ( T new_node, unsigned long ul_position ); //inserts a node before the specified subscript index.
+ unsigned char push_back ( T new_node ); //adds a node to the end of the vector.
+ unsigned char push_front ( T new_node ); //adds a node to the start of the list (same as custom_vector::insert ( 0, T ).
+ typename std::vector<T>::iterator erase ( typename std::vector<T>::iterator to_delete ); //erases a node by its std::vector<T>::iterator.
+ custom_vector_iterator<T> erase ( custom_vector_iterator<T> &to_delete ); //erases a node by its custom_vector_iterator<T>.
+
+ unsigned char clear ( void ); //deletes all nodes within the vector and resets the size to zero.
  unsigned char operator+ ( custom_vector<T>& );
  T *operator [] ( unsigned long ul_subscript );
  unsigned char operator = ( const custom_vector &source );
@@ -291,10 +331,9 @@
  template<class T>
  custom_vector<T>::custom_vector (  )
 {{
-
- this ->m_ul_size = 0;
+ this ->m_ul_length = 0;
  try {
-   this ->m_lp_safety_node = new char [ sizeof ( T ) ];
+   this ->m_lp_safety_node = new unsigned char [ sizeof ( T ) ];
    //memset ( this ->m_lp_safety_node, 0, sizeof ( T ) );
    //*((char *) this ->m_lp_safety_node) = 'J';
  } catch ( ... ) {
@@ -308,6 +347,20 @@
  delete[] this ->m_lp_safety_node;
 }}
 
+ //return the size of all of the nodes in bytes.
+ template<class T>
+ unsigned long custom_vector<T>::size ( void )
+{{
+ return this ->m_ul_length * sizeof ( T );
+}}
+
+ //Return the length of the vector (the number of nodes).
+ template<class T>
+ unsigned long custom_vector<T>::length ( void )
+{{
+ return this ->m_ul_length;
+}}
+
 //This inserts the element before the position specified.
 //This doesn't overwrite the contents at the specified position.
 //To do that, use custom_vector::operator[].
@@ -315,7 +368,7 @@
  unsigned char custom_vector<T>::insert ( T new_node, unsigned long ul_position )
 {{
  try {
-   if ( ul_position > this ->m_ul_size - 1 )
+   if ( ul_position > this ->m_ul_length - 1 )
         return this ->push_back ( new_node );
 
    //!! TODO: try/catch.
@@ -336,7 +389,7 @@
    return 0;
  }
 
- this ->m_ul_size ++;
+ this ->m_ul_length ++;
  return 1;
 }}
 
@@ -361,7 +414,7 @@
    return 0;
  }
 
- this ->m_ul_size ++;
+ this ->m_ul_length ++;
  return 1;
 }}
 
@@ -387,23 +440,50 @@
    return 0;
  }
 
- this ->m_ul_size ++;
+ this ->m_ul_length ++;
  return 1;
 }}
 
  template<class T>
- unsigned char custom_vector<T>::erase ( typename std::vector<T>::iterator to_delete )
+ typename std::vector<T>::iterator custom_vector<T>::erase ( typename std::vector<T>::iterator to_delete )
 {{
+ typename std::vector<T>::iterator new_iterator; //The iterator to use after the delete.
+
  try {
-   this ->vector .erase ( to_delete );
+   new_iterator = this ->m_vector .erase ( to_delete );
  }
  catch ( ... ) {
-   return 0;
+   return this ->m_vector .end (  );
  }
 
- this ->m_ul_size --;
- return 1;
+ this ->m_ul_length --;
+ return new_iterator;
 }}
+
+//erases a node by its iterator.
+ template<class T>
+ custom_vector_iterator<T> custom_vector<T>::erase ( custom_vector_iterator<T> &to_delete )
+{{
+ typename std::vector<T>::iterator new_iterator; //The iterator to use after the delete.
+
+ try {
+  new_iterator = this ->m_vector .erase ( to_delete .get_iterator (  ) );
+ }
+ catch ( ... ) {
+   custom_vector_iterator<T> x ( &this ->m_vector );
+   x .goto_last_iterator (  );
+   x ++;
+   return x;
+ }
+
+ this ->m_ul_length --;
+ custom_vector_iterator<T> x ( &this ->m_vector );
+ //x .goto_index ( new_iterator - this ->m_vector .begin (  ) );
+ x .goto_iterator ( new_iterator ); //use the std::iterator for our custom_vector_iterator.
+
+ return x;
+}}
+
 
  template<class T>
  unsigned char custom_vector<T>::clear ( void )
@@ -415,7 +495,7 @@
    return 0;
  }
 
- this ->m_ul_size = 0;
+ this ->m_ul_length = 0;
  return 1;
 }}
 
@@ -431,7 +511,7 @@
        if ( ! this ->push_back ( *it ) )
             return 0;
 
-       this ->m_ul_size ++;
+       this ->m_ul_length ++;
       }
 
  return 1;
@@ -443,11 +523,9 @@
  template<class T>
  T *custom_vector<T>::operator [] ( unsigned long ul_subscript )
 {{
- if ( ul_subscript >= this ->m_ul_size - 1 )
+ if ( ul_subscript >= this ->m_ul_length - 1 )
       return (T *) m_lp_safety_node;
-//      return &m_safety_node;
 
- //return &this ->m_vector [ ul_subscript ];
  return &this ->m_vector .at ( ul_subscript );
 }}
 
@@ -504,7 +582,6 @@
  v .push_back ( 's' );
  v .push_back ( 't' );
  v .push_back ( '.' );
- printf ( "Test.\n" );
 
  //Show that custom_vector::m_safety_node is defaulted to 0.
  v .show_safety_node (  );
@@ -560,9 +637,29 @@
        printf ( "Test: [%c]\n", *it );
  printf ( "\n" );
 
+
+ printf ( "Goto_iterator test:\n" );
+ for ( std::vector<char>::iterator std_iterator = v .begin (  ); std_iterator != v .end (  ); std_iterator ++ )
+      {
+       custom_vector_iterator<char> custom_iterator ( *v );
+       custom_iterator .goto_iterator ( std_iterator );
+       printf ( "This is the character: { '%c', '%c' }\n", *std_iterator, *custom_iterator );
+      }
+
+ printf ( "Goto_index test:\n" );
+ custom_vector_iterator<char> index_iterator ( *v );
+ for ( unsigned long ul_i = 0; ul_i < v .length (  ); ul_i ++ )
+      {
+       index_iterator .goto_index ( ul_i );
+       printf ( "This is the character [ %d ]: '%c'\n", ul_i, *index_iterator );
+      }
+
  printf ( "! operator test.\n" );
- for ( custom_vector_iterator<char> it ( *v ); !! it; it ++ )
+ for ( custom_vector_iterator<char> it ( *v ); !! it; it = v .erase ( it ) ) //custom_vector::erase(custom_vector_iterator<T> &);
+ //for ( custom_vector_iterator<char> it ( *v ); !! it; it = v .erase ( it.get_iterator (  ) ) ) //custom_vector::erase(std::vector<T>::iterator)
+      {
        printf ( "Test: [%c]\n", *it );
+      }
  printf ( "\n" );
 
  //custom_vector_iterator_test (  );
