@@ -117,37 +117,19 @@
  }
 }}
 
- sub show_array
-{{
- my $array_ref = shift || 0;
- if ( ! $array_ref ) {
-     print "Error: No array was passed by reference in show_array to display.\n";
-     return 0;
- }
-
- if ( ref($array_ref) ne 'ARRAY' ) {
-      print "Error: A non-array was passed to show_array().\n";
-      return 0;
- }
-
- while ( my ( $k, $v ) = each ( @{$array_ref} ) ) {
-   print "\"" . $k . "\" => \"" . $v . "\"\n";
- }
-}}
-
 #Pass a reference to an array for which you'd like the permutations.
  sub get_permutations
 {{
  my $array_ref = shift || 0;
- my $header_ref = shift || 0;
  if ( ! $array_ref ) {
-   return 0;
+      printf "Error: The call to get_permutations didn't contain a reference to an array to permute.\n";
+      return (  ); #return an empty array.
  }
 
  if ( ref($array_ref) ne 'ARRAY' ) {
 
-   print "Warning: A non-array variable was passed to get_permutations.\n";
-   return (  );
+     print "Warning: A non-array variable was passed to get_permutations.\n";
+     return (  ); #return an empty array.
 
  }
 
@@ -168,13 +150,7 @@
 
    @branch_body = ( @branch_body, @branch_footer ); #this will be flattened (array(), array()) = array(....)
 
-   my @header = (  );
-   if ( $header_ref ) {
-        @header = @{$header_ref}; # [ 0 .. scalar @{$header_ref} ]; #reset the header.
-   }
-
-   push ( @header, @branch_head );
-   my @permutation = get_permutations ( \@branch_body, \@header );
+   my @permutation = get_permutations ( \@branch_body );
    @permutation = ( @branch_head, @permutation );
    push ( @permutations, \@permutation );
 
