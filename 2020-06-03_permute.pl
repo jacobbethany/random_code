@@ -71,8 +71,6 @@
  while ( my ( $k, $v ) = each ( @{$array_ref} ) ) {
 
    if ( ref ( $v ) eq 'ARRAY' ) {
-        my @tmp_header = @header;
-        push ( @tmp_header, ${$array_ref}[1] );
 
         convert_permutations ( $v, $output_array_ref, $indentation + 1, \@header );
 
