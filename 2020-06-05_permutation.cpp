@@ -35,7 +35,7 @@
      },
      P({abcd}, {ac}) -> {
        P({abcd}, {acb}) -> {
-         P({abcd}, {acbd}) //This would be detected at {adb} and a recursive call wouldn't actually be made.
+         P({abcd}, {acbd}) //This would be detected at {acb} and a recursive call wouldn't actually be made.
        },
        P({abcd}, {acd}) -> {
          P({abcd}, {acdb}) //This would be detected at {acd} and a recursive call wouldn't actually be made.
