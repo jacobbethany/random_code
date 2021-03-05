@@ -5,3 +5,5 @@ any larger projects. The most recent c++ permutation algorithm and variable dump
 code is not indicative of my typical coding style or approach, as the majority of the code here was not created for professional consumption.
 
 The usage of any code within this repository for commercial purposes is not permitted without explicit authorization. Any academic or personal non-commercial usage is allowed.
+Note that no guarantees are made to the usefullness, efficacy, or safety of any of the code within this repository; and I accept no responsibility for the use or misuse thereof
+or of any damages caused directly or indirectly by said usage. Use it at your own risk.
