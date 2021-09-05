@@ -43,7 +43,9 @@ import java.util.*; //Vector, Hashtable, ...etc.
   //though it's contained objects will likely go out of scope as well and be freed
   //(garbage collected), anyway.
   public Boolean freeDatabaseResources (  ) {
+
     try {
+
       if ( m_resultset != null )
            m_resultset .close (  );
 
@@ -52,13 +54,15 @@ import java.util.*; //Vector, Hashtable, ...etc.
 
       if ( m_connection != null )
            m_connection .close (  );
-	} catch ( Exception e ) {
+
+    } catch ( Exception e ) {
       System.out.print ( "Exception while closing the connection to the MariaDB database and freeing resources: \"" + e .getMessage (  ) + "\"\n" );
       return false;
-	} catch ( Throwable t ) {
+    } catch ( Throwable t ) {
       System.out.print ( "Throwable exception while closing the connection to the MariaDB database and freeing resources: \"" + t .getMessage (  ) + "\"\n" );
       return false;
-	}
+    }
+
     return true;
   }
 
@@ -71,11 +75,11 @@ import java.util.*; //Vector, Hashtable, ...etc.
         "jdbc:mysql://" + str_url + ":" + str_port + "/" + str_default_database + "?user=" + str_username + "&password=" + str_password
       );
       m_statement = m_connection .createStatement (  );
-	} catch ( Exception e ) {
+    } catch ( Exception e ) {
       System.out.print ( "Exception while connecting to MariaDB: \"" + e .getMessage (  ) + "\"\n" );
-	} catch ( Throwable t ) {
+    } catch ( Throwable t ) {
       System.out.print ( "Throwable exception while connecting to MariaDB: \"" + t .getMessage (  ) + "\"\n" );
-	}
+    }
 
   }
 
@@ -85,15 +89,11 @@ import java.util.*; //Vector, Hashtable, ...etc.
     try {
       m_statement = m_connection .createStatement (  );
       return m_statement .executeUpdate ( str_query );
-
-      //if ( m_resultset .rowUpdated (  ) || m_resultset .rowDeleted (  ) ) {
-      //  return true;
-	  //}
-	} catch ( Exception e ) {
+    } catch ( Exception e ) {
       System.out.print ( "Exception while running an update query: \"" + e .getMessage (  ) + "\"\n" );
-	} catch ( Throwable t ) {
+    } catch ( Throwable t ) {
       System.out.print ( "Throwable exception while running an update query: \"" + t .getMessage (  ) + "\"\n" );
-	}
+    }
 
     return -1; //return -1 on error.
   }
@@ -109,14 +109,14 @@ import java.util.*; //Vector, Hashtable, ...etc.
       for ( int i = 0; i < ary_str_parameters .length; i ++ ) {
         //Note: The parameters have one-based indices within the MySQL driver.
         prepared_statement .setString ( i + 1, ary_str_parameters [ i ] );
-	  }
+      }
       return prepared_statement.executeUpdate (  );
 
-	} catch ( Exception e ) {
-      System.out.print ( "Exception while running an update query: \"" + e .getMessage (  ) + "\"\n" );
-	} catch ( Throwable t ) {
-      System.out.print ( "Throwable exception while running an update query: \"" + t .getMessage (  ) + "\"\n" );
-	}
+    } catch ( Exception e ) {
+       System.out.print ( "Exception while running an update query: \"" + e .getMessage (  ) + "\"\n" );
+    } catch ( Throwable t ) {
+       System.out.print ( "Throwable exception while running an update query: \"" + t .getMessage (  ) + "\"\n" );
+    }
 
     //On error, return a negative number of affected rows.
     return -1;
@@ -137,11 +137,11 @@ import java.util.*; //Vector, Hashtable, ...etc.
       int i_updated_row_count = m_statement .executeUpdate ( str_query );
       //System.out.print ( "integer result of the query: \"" + i_updated_row_count + "\".\n" );
       return i_updated_row_count > 0 ? true : false;
-	} catch ( Exception e ) {
+    } catch ( Exception e ) {
       System.out.print ( "Exception while running an update query: \"" + e .getMessage (  ) + "\"\n" );
-	} catch ( Throwable t ) {
+    } catch ( Throwable t ) {
       System.out.print ( "Throwable exception while running an update query: \"" + t .getMessage (  ) + "\"\n" );
-	}
+    }
 
     return false;
   }
@@ -155,22 +155,20 @@ import java.util.*; //Vector, Hashtable, ...etc.
       for ( int i = 0; i < ary_str_parameters .length; i ++ ) {
         //Note: The parameters have one-based indices within the MySQL driver.
         prepared_statement .setString ( i + 1, ary_str_parameters [ i ] );
-	  }
+      }
       int i_affected_rows =  prepared_statement .executeUpdate (  );
       if ( 0 == i_affected_rows ) {
         return 0;
-	  }
+      }
       ResultSet rs_generated_keys = prepared_statement .getGeneratedKeys (  );
       if ( rs_generated_keys .next (  ) ) {
         return rs_generated_keys .getLong ( 1 );
-	  }
-      return 0;
-
-	} catch ( Exception e ) {
+      }
+    } catch ( Exception e ) {
       System.out.print ( "Exception while running an update query: \"" + e .getMessage (  ) + "\"\n" );
-	} catch ( Throwable t ) {
+    } catch ( Throwable t ) {
       System.out.print ( "Throwable exception while running an update query: \"" + t .getMessage (  ) + "\"\n" );
-	}
+    }
 
     return 0;
   }
@@ -179,35 +177,35 @@ import java.util.*; //Vector, Hashtable, ...etc.
   public Vector<Map<String, String>> selectMultiple ( String str_query ) {
     try {
       m_resultset = m_statement .executeQuery ( str_query );
-	} catch ( Exception e ) {
+    } catch ( Exception e ) {
       System.out.print ( "Exception during call to executeQuery in selectMultiple: \"" + e .getMessage (  ) + "\"\n" );
-	} catch ( Throwable t ) {
+    } catch ( Throwable t ) {
       System.out.print ( "Throwable exception during call to executeQuery in selectMultiple: \"" + t .getMessage (  ) + "\"\n" );
-	}
+    }
 
     Vector<Map<String, String>> rows = new Vector<Map<String, String>> (  );
     try {
 
-       ResultSetMetaData rsmd = m_resultset .getMetaData (  );
-       int i_column_count = rsmd .getColumnCount (  );
-       while ( m_resultset .next (  ) ) {
-         //Create a new (row) vector each loop iteration to add to the vector (rows) of vectors (columns).
-         Map<String, String> this_row = new HashMap<String, String> (  );
+      ResultSetMetaData rsmd = m_resultset .getMetaData (  );
+      int i_column_count = rsmd .getColumnCount (  );
+      while ( m_resultset .next (  ) ) {
+        //Create a new (row) vector each loop iteration to add to the vector (rows) of vectors (columns).
+        Map<String, String> this_row = new HashMap<String, String> (  );
 
-         for ( int i = 1; i <= i_column_count; i ++ ) {
-           this_row .put ( rsmd .getColumnName ( i ), m_resultset .getString ( i ) );
-		 }
-         rows .add ( this_row );
-         //this_row .clear (  ); //Clearing this would actually clear the row that we added, since it adds a reference to this list.
+        for ( int i = 1; i <= i_column_count; i ++ ) {
+          this_row .put ( rsmd .getColumnName ( i ), m_resultset .getString ( i ) );
+        }
+        rows .add ( this_row );
+        //this_row .clear (  ); //Clearing this would actually clear the row that we added, since it adds a reference to this list.
 
-         //fetch the next row and display it.
-         System.out.print ( "We're currently on row #" + m_resultset .getRow (  ) + "\n" );
-	   }
-	} catch ( Exception e ) {
+        //fetch the next row and display it.
+        System.out.print ( "We're currently on row #" + m_resultset .getRow (  ) + "\n" );
+      }
+    } catch ( Exception e ) {
       System.out.print ( "Exception while connecting to MariaDB: \"" + e .getMessage (  ) + "\"\n" );
-	} catch ( Throwable t ) {
+    } catch ( Throwable t ) {
       System.out.print ( "Throwable exception while connecting to MariaDB: \"" + t .getMessage (  ) + "\"\n" );
-	}
+    }
 
     return rows;
   }
@@ -218,41 +216,39 @@ import java.util.*; //Vector, Hashtable, ...etc.
     Vector<Vector<String>> rows = new Vector<Vector<String>> (  );
     try {
 
-       ResultSetMetaData rsmd = m_resultset .getMetaData (  );
-       int i_column_count = rsmd .getColumnCount (  );
-       while ( m_resultset .next (  ) ) {
-         //Create a new (row) vector each loop iteration to add to the vector (rows) of vectors (columns).
-         Vector<String> this_row = new Vector<String> (  );
+      ResultSetMetaData rsmd = m_resultset .getMetaData (  );
+      int i_column_count = rsmd .getColumnCount (  );
+      while ( m_resultset .next (  ) ) {
+        //Create a new (row) vector each loop iteration to add to the vector (rows) of vectors (columns).
+        Vector<String> this_row = new Vector<String> (  );
 
-         for ( int i = 1; i <= i_column_count; i ++ ) {
-           this_row .add ( m_resultset .getString ( i ) );
-		 }
-         rows .add ( this_row );
-         //this_row .clear (  ); //Clearing this would actually clear the row that we added, since it adds a reference to this list.
+        for ( int i = 1; i <= i_column_count; i ++ ) {
+          this_row .add ( m_resultset .getString ( i ) );
+        }
+        rows .add ( this_row );
+        //this_row .clear (  ); //Clearing this would actually clear the row that we added, since it adds a reference to this list.
 
-         //fetch the next row and display it.
-         System.out.print ( "We're currently on row #" + m_resultset .getRow (  ) + "\n" );
-	   }
-       int i_row = 1;
-       for ( Vector<String> row : rows ) {
-         System.out.print ( "Row #" + i_row + ":\n" );
-         i_row ++;
+        //fetch the next row and display it.
+        System.out.print ( "We're currently on row #" + m_resultset .getRow (  ) + "\n" );
+      } //end of while (m_result.next())
+      int i_row = 1;
+      for ( Vector<String> row : rows ) {
+      System.out.print ( "Row #" + i_row + ":\n" );
+      i_row ++;
 
-         int i_column = 1;
-         for ( String column : row ) {
-           System.out.print ( "Column #" + i_column + ": \"" + (column) + "\"\n" );
-           i_column ++;
-		 }
-
-	  }
-
-	} catch ( Exception e ) {
+        int i_column = 1;
+        for ( String column : row ) {
+          System.out.print ( "Column #" + i_column + ": \"" + (column) + "\"\n" );
+          i_column ++;
+        } //for each column
+      } //for each row.
+    } catch ( Exception e ) {
       System.out.print ( "Exception while connecting to MariaDB: \"" + e .getMessage (  ) + "\"\n" );
       return false;
-	} catch ( Throwable t ) {
+    } catch ( Throwable t ) {
       System.out.print ( "Throwable exception while connecting to MariaDB: \"" + t .getMessage (  ) + "\"\n" );
       return false;
-	}
+    }
 
     return true;
   }
