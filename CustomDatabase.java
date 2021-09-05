@@ -90,7 +90,7 @@ import java.util.*; //Vector, Hashtable, ...etc.
   }
 
   //This will return the number of affected rows.
-  //Note: This version of update requirse that you manually escape all user data included within your query via CustomDatabase.escapeString.
+  //Note: This version of update requires that you manually escape all user data included within your query via CustomDatabase.escapeString.
   public int update (
     String str_query
   ) {
