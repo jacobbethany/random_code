@@ -11,7 +11,7 @@
  it will return either zero or the new row's identifier in the prepared-statement version thereof.
  It's not guaranteed that we'll be able to get the identifier of the newly inserted row,
   depending on which type/version of the JDBC driver you're using. I'd recomend doing a
-  select statement to find the row that you've just inserted,  given some unique properties
+  select statement to find the row that you've just inserted, given some unique properties
   thereof so as to obtain the new row's identifier.
  )
  [X] Create a String escaping function to prepare queries, safely.
