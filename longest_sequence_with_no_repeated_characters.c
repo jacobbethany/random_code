@@ -1,15 +1,19 @@
 //From a leetcode problem.
-int lengthOfLongestSubstring ( char * s ) {
+
+//Created on 2021-09-07 by jacob_b_t
+int lengthOfLongestSubstring(char * s){
   const char *lpsz_string;
   char sz_visited_characters [ 1024 ] = { 0 };
   int i_longest_substring = 0;
   int i_length = strlen ( s );
   int i_subset_length;
-  char *e = sz_visited_characters; //end position of the sz_visited_characters buffer.
+  char *e; //end position of the sz_visited_characters buffer.
 
   for ( int i_i = 0; i_i < i_length; i_i ++ ) {
 
     lpsz_string = s + i_i;
+    e = sz_visited_characters;
+    *e = 0;
 
     while ( *lpsz_string ) {
 
@@ -33,8 +37,6 @@ int lengthOfLongestSubstring ( char * s ) {
       i_longest_substring = i_subset_length;
     }
 
-    e = sz_visited_characters;
-    *e = 0;
   }
 
   return i_longest_substring;
