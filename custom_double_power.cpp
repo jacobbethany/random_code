@@ -39,6 +39,11 @@
 */
  double custom_power_recurse ( double b, double x, int n, int c )
 {{
+ printf (
+   "{ b : %f, x : %f, n : %ld, c : %ld }\n",
+   b, x, n, c
+ );
+
  if ( ! n ) {
    printf ( "Raising to the power of 0 is always 1.\n" );
    return 1;
@@ -46,6 +51,10 @@
  if ( c == n ) {
    printf ( "Current power is equal to desired power.\n" );
    return x;
+ }
+
+ if ( ! c ) {
+   c = 1; //will be 2 when we do <<1 in the passed parameter to the recusive function call.
  }
 
  if ( c > n ) {
@@ -58,7 +67,7 @@
      "Desired power is uneven, so we need to handle a single power before doubling.\n"
    );
    c ++;
-   x *= x;
+   x *= b;
    return custom_power_recurse ( b, x, n, c );
  }
 
@@ -70,9 +79,6 @@
    return x;
  }
 
- if ( ! c ) {
-   c = 1; //will be 2 when we do <<1 in the passed parameter to the recusive function call.
- }
  printf ( "We're doubling the value.\n" );
  x *= x;
  return custom_power_recurse ( b, x, n, c<<1 );
@@ -80,6 +86,11 @@
 
  double custom_power ( double x, int n )
 {{
+ //1 to the power of anything is just 1.
+ if ( x == 1 ) {
+   return 1;
+ }
+
  double dbl_val = custom_power_recurse (
    x, //base value.
    x, //current value.
@@ -92,11 +103,18 @@
 
  int main ( int argc, char **argv )
 {{
+ double dbl_bases [  ] = { 2, 2.1, 2, 1 };
+ int i_powers [  ] = { 10, 3, -2, 2147483647 };
  //double dbl_val = custom_power_recurse ( 2, 2, 10, 0 );
- double dbl_val = custom_power ( 2, 10 );
- printf ( "Final value: \"%f\"\n", dbl_val );
 
- dbl_val = custom_power ( 2, -4 );
- printf ( "Final value: \"%f\"\n", dbl_val );
+ for ( int i = 0; i < sizeof(i_powers)/sizeof(int); i ++ ) {
+   double dbl_val = custom_power ( dbl_bases [ i ], i_powers [ i ] );
+   printf (
+     "%f^%ld = \"%f\"\n",
+     dbl_bases [ i ],
+     i_powers [ i ],
+     dbl_val
+   );
+ }
  return 0;
 }}
