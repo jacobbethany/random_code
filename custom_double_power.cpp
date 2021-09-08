@@ -37,7 +37,7 @@
  NOTE: This handles only postive powers.
  Use custom_power to have this be called, implicitly.
 */
- double custom_power_recurse ( double b, double x, int n, int c )
+ double custom_power_recurse ( double b, double x, int64_t n, int64_t c )
 {{
  printf (
    "{ b : %f, x : %f, n : %ld, c : %ld }\n",
@@ -58,7 +58,10 @@
  }
 
  if ( c > n ) {
-   printf ( "Whoops, we've overshot the desired power!\n" );
+   printf (
+     "Whoops, we've overshot the desired power (%ld > %ld)!\n",
+     c, n
+   );
    return x;
  }
 
@@ -84,7 +87,7 @@
  return custom_power_recurse ( b, x, n, c<<1 );
 }}
 
- double custom_power ( double x, int n )
+ double custom_power ( double x, int64_t n )
 {{
  //1 to the power of anything is just 1.
  if ( x == 1 ) {
@@ -94,7 +97,7 @@
  double dbl_val = custom_power_recurse (
    x, //base value.
    x, //current value.
-   n >= 0 ? n : -n, //only pass positive values for the desired power.
+   n >= 0 ? (int64_t) n : -((int64_t) n), //only pass positive values for the desired power.
    0 //current built-up powers.
  );
 
@@ -103,12 +106,15 @@
 
  int main ( int argc, char **argv )
 {{
- double dbl_bases [  ] = { 2, 2.1, 2, 1 };
- int i_powers [  ] = { 10, 3, -2, 2147483647 };
+ double dbl_bases [  ] = { 2, 2.1, 2, 1, 2 };
+ int i_powers [  ] = { 10, 3, -2, 2147483647, -2147483648 };
  //double dbl_val = custom_power_recurse ( 2, 2, 10, 0 );
 
  for ( int i = 0; i < sizeof(i_powers)/sizeof(int); i ++ ) {
-   double dbl_val = custom_power ( dbl_bases [ i ], i_powers [ i ] );
+   double dbl_val = custom_power (
+     dbl_bases [ i ],
+     i_powers [ i ]
+   );
    printf (
      "%f^%ld = \"%f\"\n",
      dbl_bases [ i ],
