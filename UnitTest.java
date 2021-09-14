@@ -25,11 +25,11 @@ class FakeUnitTest {
   }
   public static void  assertEquals ( Object a, Object b ) throws Exception {
     if ( a == null) {
-      throw new Exception ( getCurrentLineNumber (  ) + "Error: assertEquals called upon a null a term.\n" );
+      throw new Exception ( getCurrentLineNumber (  ) + "Error: assertEquals called upon a null 'A' term.\n" );
     }
 
     if (  b == null ) {
-      throw new Exception ( getCurrentLineNumber (  ) + "Error: assertEquals called upon a null a term.\n" );
+      throw new Exception ( getCurrentLineNumber (  ) + "Error: assertEquals called upon a null 'B' term.\n" );
     }
 
     if ( ! a .equals ( b ) ) {
