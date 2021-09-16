@@ -20,14 +20,14 @@ public class StringDateTest {
 // return false;
 //}
 //... Continue processing with the new valid date object.
- public static Date parseyyyymmddStringDate ( String strDate ) {
+ public static Date parseyyyymmddStringDate ( String str_date ) {
 
    SimpleDateFormat simple_date_yyyymmdd_formater = new SimpleDateFormat ( "yyyy-mm-dd" );
    simple_date_yyyymmdd_formater .setLenient ( false ); //Otherwise "12345-123-123" will parse with no exception.
 
    try {
 
-     return simple_date_yyyymmdd_formater .parse ( strDate );
+     return simple_date_yyyymmdd_formater .parse ( str_date );
 
    } catch ( ParseException e ) {
 
@@ -43,8 +43,8 @@ public class StringDateTest {
 
  public static void main ( String[] args ) {
 
-   String startDate = "2021-02-03";
-   String[] endDates = new String[] {
+   String str_start_date = "2021-02-03";
+   String[] ary_end_date_strings = new String[] {
      "2021-02-04", //Success test.
      "2021-02-01", //Premature ending date fail test.
      "12345-12-12", //Parse fail test. (This actually succeeds.)
@@ -53,10 +53,10 @@ public class StringDateTest {
      "12345/123/123" //Parse fail test #4. (fails because of - vs / as the delimiting token.)
    };
 
-   Date date_start = parseyyyymmddStringDate ( startDate );
-   for ( String endDate : endDates ) {
-     System.out.print ( "Ensuring that the date, \"" + endDate + "\" is after \"" + startDate + "\"\n" );
-     Date date_end = parseyyyymmddStringDate ( endDate );
+   Date date_start = parseyyyymmddStringDate ( str_start_date );
+   for ( String str_end_date : ary_end_date_strings ) {
+     System.out.print ( "Ensuring that the date, \"" + str_end_date + "\" is after \"" + str_start_date + "\"\n" );
+     Date date_end = parseyyyymmddStringDate ( str_end_date );
 
      if ( date_end == null ) {
        System.out.print ( "Error: The ending date could not be parsed.\n" );
