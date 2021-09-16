@@ -23,6 +23,11 @@ public class StringDateTest {
 //... Continue processing with the new valid date object.
  public static Date parseyyyymmddStringDate ( String str_date ) {
 
+   //Don't cause the regular expression check to throw an exception owing to a null string to be parsed.
+   if ( str_date == null ) {
+     return null;
+   }
+
    //Create a regular expression to ensure that the date is in the proper format, since the leniency flag manipulation is still not enough.
    //It allows dates like "2021-01-1" to be used.
    Pattern pat_valid_date  = Pattern .compile ( "^[0-9]{4}\\-[0-9]{2}\\-[0-9]{2}$" );
@@ -69,7 +74,8 @@ public class StringDateTest {
      "12345-123-12",  //Parse fail test #2. (passes without leniency set to false)
      "12345-123-123", //Parse fail test #3. (passes leniency set to false)
      "12345/123/123", //Parse fail test #4. (fails because of - vs / as the delimiting token.)
-     "1234-12-1"      //Parse passes even with leniency flag manipulation but fails with my regular expression checking!
+     "1234-12-1",     //Parse passes even with leniency flag manipulation but fails with my regular expression checking!
+     null             //Parse failure (would cause regular expression functions to throw an exception).
    };
 
    Date date_start = parseyyyymmddStringDate ( str_start_date );
