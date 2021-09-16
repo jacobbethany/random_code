@@ -16,9 +16,10 @@ public class StringDateTest {
 //Accepts a string date in this format "2021-09-15"
 //Returns a Date object that represents this date on success;
 //returns a reference to null on failure.
-//Usage if ( (someDate = parseyyyymmddStringDate ( "2021-09-15" )) == null ) {
-// System.out.print ( "Date parsing failed.\n" );
-// return false;
+//Usage:
+//if ( (someDate = parseyyyymmddStringDate ( "2021-09-15" )) == null ) {
+//  System.out.print ( "Date parsing failed.\n" );
+//  return false;
 //}
 //... Continue processing with the new valid date object.
  public static Date parseyyyymmddStringDate ( String str_date ) {
