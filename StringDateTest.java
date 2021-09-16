@@ -7,9 +7,10 @@
 */
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-//import java.time.Instant;
+//import java.time.Instant; //For if we wanted to return a particular default date, rather than a null reference on date parsing errors.
 import java.util.Date;
-
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 public class StringDateTest {
 
 //Accepts a string date in this format "2021-09-15"
@@ -22,14 +23,31 @@ public class StringDateTest {
 //... Continue processing with the new valid date object.
  public static Date parseyyyymmddStringDate ( String str_date ) {
 
-   SimpleDateFormat simple_date_yyyymmdd_formater = new SimpleDateFormat ( "yyyy-mm-dd" );
-   simple_date_yyyymmdd_formater .setLenient ( false ); //Otherwise "12345-123-123" will parse with no exception.
+   //Create a regular expression to ensure that the date is in the proper format, since the leniency flag manipulation is still not enough.
+   //It allows dates like "2021-01-1" to be used.
+   Pattern pat_valid_date  = Pattern .compile ( "^[0-9]{4}\\-[0-9]{2}\\-[0-9]{2}$" );
+
+   //Try to match the regular expression against the string.
+   Matcher match = pat_valid_date .matcher ( str_date );
+
+   //If the regular expression didn't match, then the date is malformed.
+   if ( ! match.find (  ) ) {
+     //Debugging output to ensure that the regular expression is the failure point, rather than the SimpleDateFormat object.
+     //System.out.print ( "The date is malformed.\n" );
+     return null;
+   }
+
+   SimpleDateFormat simple_date_yyyymmdd_formatter = new SimpleDateFormat ( "yyyy-mm-dd" );
+   simple_date_yyyymmdd_formatter .setLenient ( false ); //Otherwise "12345-123-123" will parse with no exception.
 
    try {
 
-     return simple_date_yyyymmdd_formater .parse ( str_date );
+     return simple_date_yyyymmdd_formatter .parse ( str_date );
 
    } catch ( ParseException e ) {
+
+     //Debugging output to show where the failure point was (regular expression vs this).
+     //System.out.print ( "The date could not be parsed by simple_date_yyyymmdd_formatter.\n" );
 
      //We could default to a date that is guaranteed to be before the first date, to force a failure.
      //System.out.print ( "Parsing error: " + e .getMessage (  ) + ".\n" );
@@ -45,12 +63,13 @@ public class StringDateTest {
 
    String str_start_date = "2021-02-03";
    String[] ary_end_date_strings = new String[] {
-     "2021-02-04", //Success test.
-     "2021-02-01", //Premature ending date fail test.
-     "12345-12-12", //Parse fail test. (This actually succeeds.)
-     "12345-123-12", //Parse fail test #2. (passes without leniency set to false)
+     "2021-02-04",    //Success test.
+     "2021-02-01",    //Premature ending date fail test.
+     "12345-12-12",   //Parse fail test. (This actually succeeds.)
+     "12345-123-12",  //Parse fail test #2. (passes without leniency set to false)
      "12345-123-123", //Parse fail test #3. (passes leniency set to false)
-     "12345/123/123" //Parse fail test #4. (fails because of - vs / as the delimiting token.)
+     "12345/123/123", //Parse fail test #4. (fails because of - vs / as the delimiting token.)
+     "1234-12-1"      //Parse passes even with leniency flag manipulation but fails with my regular expression checking!
    };
 
    Date date_start = parseyyyymmddStringDate ( str_start_date );
