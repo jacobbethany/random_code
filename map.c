@@ -12,6 +12,7 @@
  //Type, Map, Index
  //Example usage: MAP_DATA_AT ( SOME_STRUCTURE, some_map, 0 ) .some_structure_member
  #define MAP_DATA_AT(T,M,I) ( *((T*) M .lpary_doubly_linked_list [ I ] ->lpv_data) )
+ #define MAP_KEY_AT(M,I) ( M .lpary_doubly_linked_list [ I ] ->lpsz_key )
 
  #include "stdio.h"
  #include "stdlib.h"
@@ -109,6 +110,97 @@
  return 1;
 }}
 
+ //This will return 0, if no node with the specified key exists, yet.
+ //I'm tempted to make a get_map_node version that inserts a new node,
+ //if nothing is found. This would invoke some user-defined initialization
+ //function that returns a new structure. (MAP would require a new member,
+ //void (*lpfn_init)(void);)
+ void *find_map_node ( MAP *lpm_map, const char *lpsz_key )
+{{
+ fprintf (
+   stdout,
+   "find_map_node: Checking to see whether the referenced map is valid.\n"
+ );
+
+ //If the reference to the map is invalid.
+ if ( ! lpm_map ) {
+   return 0;
+ }
+ fprintf (
+   stdout,
+   "find_map_node: Checking to see whether the referenced key is valid.\n"
+ );
+
+ //If the key string is an invalid reference.
+ if ( ! lpsz_key ) {
+   return 0;
+ }
+ fprintf (
+   stdout,
+   "find_map_node: Checking to see whether the referenced key is empty.\n"
+ );
+
+ //If the key string doesn't have at least one character.
+ if ( ! *lpsz_key ) {
+   return 0;
+ }
+ fprintf (
+   stdout,
+   "find_map_node: Resolving the tranche index.\n"
+ );
+
+
+ //Get the tranche index.
+ unsigned short us_tranche_identifier = *((unsigned short *) lpsz_key);
+/*
+ memcpy ( //us_tranche_idenifier = *((unsigned short *) lpsz_key);
+   &us_tranche_identifier,
+   lpsz_key,
+   2
+ );
+*/
+
+ fprintf (
+   stdout,
+   "Looking for \"%s\" in tranche #%" PRIu32 "\n",
+   lpsz_key,
+   us_tranche_identifier
+ );
+
+ //We'll start at the beginning of the tranche list and move forward.
+ //Some basic hashing algorithm or tree structure of alphabetically sorted
+ //keys within the tranche's linked list could speed things up a bit more,
+ //but we'll search linearly, from the first node, for now.
+ DOUBLY_LINKED_LIST *lp_doubly_linked_list_node = lpm_map ->tranches [ us_tranche_identifier ] .lp_first_node;
+ while ( lp_doubly_linked_list_node ) {
+
+   fprintf (
+     stdout,
+     "find_map_node: \"%s\" ?= \"%s\"\n",
+     lp_doubly_linked_list_node ->lpsz_key,
+     lpsz_key
+   );
+
+   //If the key of this node matches what we're looking for.
+   if ( ! strcmp ( lp_doubly_linked_list_node ->lpsz_key, lpsz_key ) ) {
+     return lp_doubly_linked_list_node ->lpv_data;
+   }
+   else {
+     fprintf ( stdout, "find_map_node: They were NOT EQUAL.\n" );
+   }
+
+   lp_doubly_linked_list_node = lp_doubly_linked_list_node ->lp_next;
+   fprintf (
+     stdout,
+     "find_map_node: We've followed the next reference to %p.\n",
+     lp_doubly_linked_list_node
+   );
+ }
+
+ //We couldn't find the node.
+ return 0;
+}}
+
 /*
  We could do a slight modification to this to allow prepending.
  1.) The reference list would need to be memmoved up the size of
@@ -129,18 +221,17 @@
  is fine, since one can iterate from 0 ->n with the main reference array
  without issue.
 */
- uint8_t add_map_node (
+ uint8_t set_map_node (
    MAP *lpm_map,
    const char *lpsz_key,
    void *lpv_data,
    uint32_t ui32_data_size
  )
 {{
- fprintf (
-   stdout,
-   "Entered the function, \"add_map_node\"\n"
- );
-
+ //If the map reference passed is invalid.
+ if ( ! lpm_map ) {
+   return 0;
+ }
  //If an invalid reference was passed for the string, fail.
  if ( ! lpsz_key ) {
    return 0;
@@ -153,10 +244,47 @@
  if ( ! lpm_map ->lpfn_sort_comparator_function ) {
    return 0;
  }
+ //If no free function was specified, then fail.
+ if ( ! lpm_map ->lpfn_free ) {
+   return 0;
+ }
+
+ //If the key already exists, just update it.
+ void *lpv_preexisting_doubly_linked_list_node_data;
+ if ( lpv_preexisting_doubly_linked_list_node_data = find_map_node ( lpm_map, lpsz_key ) ) {
+
+   fprintf (
+     stdout,
+     "set_map_node: Freeing the user-defined data with the user-supplied callback function.\n"
+   );
+
+   //Call the user-defined free function on the user-data stored within the pre-existing
+   //structure in the node that we've found.
+   lpm_map ->lpfn_free ( lpv_preexisting_doubly_linked_list_node_data );
+
+   fprintf (
+     stdout,
+     "set_map_node: Overwriting %" PRIu32 " bytes of user-data with the newly supplied" \
+     " user-data @ %p for this key @ %p.\n",
+     ui32_data_size,
+     lpv_data,
+     lpv_preexisting_doubly_linked_list_node_data
+   );
+
+   //We can safely assume that the user-data is of the same size and copy it in.
+   memcpy (
+     lpv_preexisting_doubly_linked_list_node_data,
+     lpv_data,
+     ui32_data_size
+   );
+
+   //We've successfully updated the node.
+   return 1;
+ }
 
  fprintf (
    stdout,
-   "Getting the tranche identifier.\n"
+   "set_map_node: Getting the tranche identifier.\n"
  );
 
  //Store the first two characters of the key in a variable
@@ -177,7 +305,7 @@
 
  fprintf (
    stdout,
-   "Creating a new doubly-linked-list node in tranche #%" PRIu32 ".\n",
+   "set_map_node: Creating a new doubly-linked-list node in tranche #%" PRIu32 ".\n",
    us_tranche_identifier
  );
  DOUBLY_LINKED_LIST *lp_new_doubly_linked_list_node = new_doubly_linked_list_node (
@@ -195,14 +323,14 @@
 
  fprintf (
    stdout,
-   "Attaching the new node to the end of the list.\n"
+   "set_map_node: Attaching the new node to the end of the list.\n"
  );
 
  //If there is at least one node in the list, already.
  if ( lp_search_doubly_linked_list_node ) {
    fprintf (
      stdout,
-     "Attatching this to the end of an existing tranche.\n"
+     "set_map_node: Attatching this to the end of an existing tranche.\n"
    );
 
    lp_search_doubly_linked_list_node ->lp_next = lp_new_doubly_linked_list_node;
@@ -215,7 +343,7 @@
  else {
    fprintf (
      stdout,
-     "Assigning this new node as the first and last node of a previously empty tranche.\n"
+     "set_map_node: Assigning this new node as the first and last node of a previously empty tranche.\n"
    );
    lpm_map ->tranches [ us_tranche_identifier ] .lp_first_node = lp_new_doubly_linked_list_node;
    lpm_map ->tranches [ us_tranche_identifier ] .lp_last_node = lp_new_doubly_linked_list_node;
@@ -268,14 +396,14 @@
 
  fprintf (
    stdout,
-   "Storing the newly re/allocated node reference array address in the map.\n"
+   "set_map_node: Storing the newly re/allocated node reference array address in the map.\n"
  );
 
  lpm_map ->lpary_doubly_linked_list = (DOUBLY_LINKED_LIST **) lpv_new_node_reference_array;
 
  fprintf (
    stdout,
-   "Storing the new reference at the end of the reference array (zero-based offset #%" PRIu32 ").\n",
+   "set_map_node: Storing the new reference at the end of the reference array (zero-based offset #%" PRIu32 ").\n",
    lpm_map ->ui32_count - 1
  );
 
@@ -317,85 +445,6 @@
  return 1;
 }}
 
- void *find_map_node ( MAP *lpm_map, const char *lpsz_key )
-{{
- fprintf (
-   stdout,
-   "find_map_node: Checking to see whether the referenced map is valid.\n"
- );
-
- //If the reference to the map is invalid.
- if ( ! lpm_map ) {
-   return 0;
- }
- fprintf (
-   stdout,
-   "find_map_node: Checking to see whether the referenced key is valid.\n"
- );
-
- //If the key string is an invalid reference.
- if ( ! lpsz_key ) {
-   return 0;
- }
- fprintf (
-   stdout,
-   "find_map_node: Checking to see whether the referenced key is empty.\n"
- );
-
- //If the key string doesn't have at least one character.
- if ( ! *lpsz_key ) {
-   return 0;
- }
- fprintf (
-   stdout,
-   "find_map_node: Resolving the tranche index.\n"
- );
-
-
- //Get the tranche index.
- unsigned short us_tranche_identifier = *((unsigned short *) lpsz_key);
-/*
- memcpy ( //us_tranche_idenifier = *((unsigned short *) lpsz_key);
-   &us_tranche_identifier,
-   lpsz_key,
-   2
- );
-*/
-
- fprintf (
-   stdout,
-   "Looking for \"%s\" in tranche #" PRIu32 "\n",
-   lpsz_key,
-   us_tranche_identifier
- );
-
- //We'll start at the beginning of the tranche list and move forward.
- //Some basic hashing algorithm or tree structure of alphabetically sorted
- //keys within the tranche's linked list could speed things up a bit more,
- //but we'll search linearly, from the first node, for now.
- DOUBLY_LINKED_LIST *lp_doubly_linked_list_node = lpm_map ->tranches [ us_tranche_identifier ] .lp_first_node;
- while ( lp_doubly_linked_list_node ) {
-
-   fprintf (
-     stdout,
-     "\"%s\" ?= \"%s\"\n",
-     lp_doubly_linked_list_node ->lpsz_key,
-     lpsz_key
-   );
-
-   //If the key of this node matches what we're looking for.
-   if ( ! strcmp ( lp_doubly_linked_list_node ->lpsz_key, lpsz_key ) ) {
-     return lp_doubly_linked_list_node ->lpv_data;
-   }
-
-   lp_doubly_linked_list_node = lp_doubly_linked_list_node ->lp_next;
- }
-
- //We couldn't find the node.
- return 0;
-}}
-
-
 ///user-defined callbacks.
  uint8_t free_map_user_data ( void *lpv_data )
 {{
@@ -412,7 +461,7 @@
  MAP map;
  fprintf (
    stdout,
-   "Initializing the map.\n"
+   "main: Initializing the map.\n"
  );
 
  initialize_map (
@@ -423,25 +472,92 @@
 
  fprintf (
    stdout,
-   "Preparing some user data.\n"
+   "main: Preparing some user data.\n"
  );
 
  int8_t i8_x = 7;
 
  fprintf (
    stdout,
-   "Adding the user data to the map.\n"
+   "main: Adding the user data to the map.\n"
  );
 
- add_map_node (
+ set_map_node (
    &map,
    "some_key",
    (void *) &i8_x,
    sizeof(int8_t)
  );
 
+ fprintf (
+   stdout,
+   "main: Adding another key to the map.\n"
+ );
+
+ i8_x = 29;
+ set_map_node (
+   &map,
+   "jack",
+   (void *) &i8_x,
+   sizeof(int8_t)
+ );
+
+ fprintf (
+   stdout,
+   "main: Looking for a key that won't exist, yet.\n"
+ );
+
+ int8_t *lpi8_x = find_map_node (
+   &map,
+   "jacob"
+ );
+
+ fprintf (
+   stdout,
+   "main: We've made it out of find_map_node.\n"
+ );
+
+ if ( lpi8_x ) {
+   fprintf (
+     stdout,
+     "main: &map [ \"some_key\" ] = %p; its value is: %" PRIi8 "\n",
+     lpi8_x,
+     *lpi8_x
+   );
+ }
+ else {
+   fprintf (
+     stderr,
+     "main: Error: We were unable to find the node.\n"
+   );
+ }
+
+ fprintf (
+   stdout,
+   "main: Adding a third key to the map.\n"
+ );
+
+
+ //Should should be in the same tranche as "jack"
+ set_map_node (
+   &map,
+   "jacob",
+   (void *) &i8_x,
+   sizeof(int8_t)
+ );
+
+
+ //TODO: Find and display this node, again.
+
+
+ fprintf (
+   stdout,
+   "main: Updating the third key.\n"
+ );
+
+ //Update the value to be 32.
  i8_x = 32;
- add_map_node (
+ set_map_node (
    &map,
    "jacob",
    (void *) &i8_x,
@@ -450,47 +566,29 @@
 
  fprintf (
    stdout,
-   "Showing the user data.\n"
+   "main: Showing the user data.\n"
  );
 
  for ( uint32_t ui32_i = 0; ui32_i < map .ui32_count; ui32_i ++ ) {
    fprintf (
      stdout,
-     "Some value within the block: \"%" PRIi8 "\"\n",
+     "main: \"%s\" => \"%" PRIi8 "\"\n",
 //     *((int8_t*) map .lpary_doubly_linked_list [ ui32_i ] ->lpv_data)
+     MAP_KEY_AT ( map, ui32_i ),
      MAP_DATA_AT ( int8_t, map, ui32_i )
-   );
- }
-
- int8_t *lpi8_x = find_map_node (
-   &map,
-   "jacob"
- );
- if ( lpi8_x ) {
-   fprintf (
-     stdout,
-     "&map [ \"some_key\" ] = %p; its value is: %" PRIi8 "\n",
-     lpi8_x,
-     *lpi8_x
-   );
- }
- else {
-   fprintf (
-     stderr,
-     "Error: We were unable to find the node.\n"
    );
  }
 
  fprintf (
    stdout,
-   "Freeing the map.\n"
+   "main: Freeing the map.\n"
  );
 
  free_map ( &map );
 
  fprintf (
    stdout,
-   "Terminating.\n"
+   "main: Terminating.\n"
  );
 
  return 0;
