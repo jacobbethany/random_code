@@ -7,11 +7,14 @@
  be to load in data from a file so many bits at a time to read headers,
  but this is still wasteful, since the bits aren't packed next to one
  another with shifts, like I would do with a bit array.
- Note: Bit fields can be useful with this method:
+ Note that even doing this:
  struct name { ... } __attribute__ ((packed));
- By packing the structure to one byte alignment, the bit fields are
- crammed together, which allows for reading from and writing to files
- in a way that actually saves space.
+ does not force two consecutive bit fields to share any common
+ bytes in memory (on MSVC -- only with GCC), if one ends before a
+ multiple of 8 bits. It seems like this won't ever help to
+ read/write files that have bit fields in their headers. The amount
+ of save space saved in memory also seems questionable.
+
  Note #2: It seems as though bit fields are padded at the end and always
  directly before a non-bit field member of a structure is defined.
 */
@@ -26,16 +29,12 @@
  #define PACK_STRUCTURE(N) __attribute__ ((packed, aligned(N)))
 
 struct date {
-  //Either this is padded to be two bytes or it is 1 byte and
-  //the next variable, m, is padded to be 3 bytes.
+  //After testing, I now know that this is padded to 1 full byte, since
+  //modifying exactly 8 bits of data at the top of the structure affects
+  //only this member.
   uint8_t d : 5; //8-4-sizeof(m)
 
-  //I've checked by overwriting bytes from the top of the structure.
-  //This variable is padded to three bytes and the variable above is
-  //padded to be exactly one byte. This is probably because, combined
-  //with the 4 bytes for the variable, y, this structure is exactly
-  //8 bytes in length which properly aligns for pointers in the x64
-  //architecture.
+  //This is padded to be 3 bytes to fit to x64 (8 byte) alignment.
   uint8_t m : 4; //8-4-sizeof(d)
 
   uint32_t y; //4 bytes
@@ -45,12 +44,12 @@ struct date {
 #pragma pack(1) //pack with one-byte alignment.
 #endif
 struct packed_date {
-  //These two variables are crammed into parts of the same byte and
-  //m extends into the next full byte. The end of the second byte
-  //containing m is padding.
-  //y exists in its own four-byte space.
+  //This is padded to be 1 byte on MSVC but is partially shared with packed_date.m on GCC.
   uint8_t d : 5; //6-4-sizeof(m)
+
+  //This is padded to be 1 byte on MSVC but is partially shared with d and padded on GCC.
   uint8_t m : 4; //6-4-sizeof(d)
+
   uint32_t y; //4 bytes
 }
 #ifndef _WIN32
@@ -62,8 +61,6 @@ struct packed_date {
 #pragma pack() //resume default packing
 #endif
 //} __attribute__ ((packed)); //(Adding this property makes the structure one-byte aligned and reduces the structure size to 6 bytes.)
-//Note: With this property, the bits of d and m are packed directly
-//against one another, making the bitfields useful for file packing.
 
  void test_date ( void ) {
    printf (
