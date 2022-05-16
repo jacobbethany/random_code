@@ -7,18 +7,23 @@
  be to load in data from a file so many bits at a time to read headers,
  but this is still wasteful, since the bits aren't packed next to one
  another with shifts, like I would do with a bit array.
-
  Note: Bit fields can be useful with this method:
  struct name { ... } __attribute__ ((packed));
  By packing the structure to one byte alignment, the bit fields are
  crammed together, which allows for reading from and writing to files
  in a way that actually saves space.
-
  Note #2: It seems as though bit fields are padded at the end and always
  directly before a non-bit field member of a structure is defined.
 */
+#ifdef _WIN32
+ #include <windows.h>
+#else
+ #include <string.h>
+#endif
  #include <stdio.h>
  #include <stdint.h>
+
+ #define PACK_STRUCTURE(N) __attribute__ ((packed, aligned(N)))
 
 struct date {
   //Either this is padded to be two bytes or it is 1 byte and
@@ -36,6 +41,9 @@ struct date {
   uint32_t y; //4 bytes
 };
 
+#ifdef _WIN32
+#pragma pack(1) //pack with one-byte alignment.
+#endif
 struct packed_date {
   //These two variables are crammed into parts of the same byte and
   //m extends into the next full byte. The end of the second byte
@@ -44,7 +52,15 @@ struct packed_date {
   uint8_t d : 5; //6-4-sizeof(m)
   uint8_t m : 4; //6-4-sizeof(d)
   uint32_t y; //4 bytes
-} __attribute__ ((packed, aligned(1))); //(Adding this property makes the structure one-byte aligned and reduces the structure size to 6 bytes.)
+}
+#ifndef _WIN32
+  PACK_STRUCTURE(1); //(Adding this property makes the structure one-byte aligned and reduces the structure size to 6 bytes.)
+#else
+  ; //the pragma pack directive already occurred, in this case.
+#endif
+#ifdef _WIN32
+#pragma pack() //resume default packing
+#endif
 //} __attribute__ ((packed)); //(Adding this property makes the structure one-byte aligned and reduces the structure size to 6 bytes.)
 //Note: With this property, the bits of d and m are packed directly
 //against one another, making the bitfields useful for file packing.
