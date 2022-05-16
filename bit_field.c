@@ -44,7 +44,8 @@ struct packed_date {
   uint8_t d : 5; //6-4-sizeof(m)
   uint8_t m : 4; //6-4-sizeof(d)
   uint32_t y; //4 bytes
-} __attribute__ ((packed)); //(Adding this property makes the structure one-byte aligned and reduces the structure size to 6 bytes.)
+} __attribute__ ((packed, aligned(1))); //(Adding this property makes the structure one-byte aligned and reduces the structure size to 6 bytes.)
+//} __attribute__ ((packed)); //(Adding this property makes the structure one-byte aligned and reduces the structure size to 6 bytes.)
 //Note: With this property, the bits of d and m are packed directly
 //against one another, making the bitfields useful for file packing.
 
@@ -80,8 +81,7 @@ struct packed_date {
    );
 
    //Defined d:5, m:4, y:32
-   //uint8_t *lp_day = (uint8_t *) &dt.d; //It is illegal to reference the bit field, here.
-   //*lp_day = 0xff;
+   //uint8_t *lp_day = (uint8_t *) &dt.d; //It is illegal to reference the bit field.
 
    //Since we can't reference the bit fields directly, let's reference
    //the top of the structure and manipulate its bytes one at a time,
@@ -106,7 +106,6 @@ struct packed_date {
    }
    printf ( "\n\n" );
 
-   return 0;
  }
 
  void test_packed_date ( void ) {
