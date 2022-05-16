@@ -15,8 +15,9 @@
  read/write files that have bit fields in their headers. The amount
  of save space saved in memory also seems questionable.
 
- Note #2: It seems as though bit fields are padded at the end and always
- directly before a non-bit field member of a structure is defined.
+ Note #2 (GCC specific): It seems as though bit fields are padded
+ at the end and always directly before a non-bit field member of
+ a structure is defined.
 */
 #ifdef _WIN32
  #include <windows.h>
