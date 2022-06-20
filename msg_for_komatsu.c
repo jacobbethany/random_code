@@ -29,8 +29,9 @@
    #define debug_printf(...)
  #endif
 
-//4321 -> 1234 for each dword's bytes.
- bool unscramble_dw_array (
+//4321 -> 1234 for each dword's bytes; and each byte of each DWORD is
+//xored by 255, 254, ...etc. in a loop.
+ bool unscramble_and_decrypt_dw_array (
    _IN_AND_OUT_ uint32_t *lpui32_dw_array,
    _IN_ uint32_t ui32_length
  )
@@ -42,6 +43,8 @@
 
  uint32_t ui32_val;
  for ( uint32_t ui32_i = 0; ui32_i < ui32_length; ui32_i ++ ) {
+   lpui32_dw_array [ ui32_i ] ^= ((0xff - (ui32_i % 0xff))*0x01010101);
+
    ui32_val  = (lpui32_dw_array [ ui32_i ] & 0xff000000) >> 24;
    ui32_val |= (lpui32_dw_array [ ui32_i ] & 0xff0000  ) >> 8;
    ui32_val |= (lpui32_dw_array [ ui32_i ] & 0xff00    ) << 8;
@@ -52,8 +55,8 @@
  return true;
 }}
 
-//Decrypt and return the number of characters in the string contained within the array.
- uint32_t decrypt_and_get_string_length_from_dword_array (
+//Return the number of characters in the string contained within the array.
+ uint32_t get_string_length_from_dword_array (
    _IN_AND_OUT_ uint32_t *lpui32_dw_array,
    _IN_ uint32_t ui32_length
  )
@@ -61,14 +64,12 @@
  uint32_t ui32_mask;
  uint32_t ui32_string_length = 0;
 
- if ( ! unscramble_dw_array ( lpui32_dw_array, ui32_length ) ) {
+ if ( ! unscramble_and_decrypt_dw_array ( lpui32_dw_array, ui32_length ) ) {
    fprintf ( stderr, "Error: We've failed to unscramble the array of dwords.\n" );
    return 0;
  }
 
  for ( uint32_t ui32_i = 0; ui32_i < ui32_length; ui32_i ++ ) {
-   lpui32_dw_array [ ui32_i ] ^= ((0xff - (ui32_i % 0xff))*0x01010101);
-
    ui32_mask = 0xff;
    for ( uint8_t ui8_j = 0; ui8_j < 4; ui8_j ++ ) {
 
@@ -83,7 +84,7 @@
  return ui32_string_length;
 }}
 
-//Decrypt, and extract the string contained within the dword array.
+//Decrypt, unscramble, and extract the string contained within the dword array.
 //Returns a reference to an array of characters representing a null-terminated string of text.
  char *get_string_from_dword_array (
    _IN_AND_OUT_ uint32_t *lpui32_dw_array,
@@ -91,7 +92,7 @@
  )
 {{
  uint32_t ui32_mask;
- uint32_t ui32_string_length = decrypt_and_get_string_length_from_dword_array (
+ uint32_t ui32_string_length = get_string_length_from_dword_array (
    lpui32_dw_array,
    ui32_length
  );
