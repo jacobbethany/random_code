@@ -1,3 +1,8 @@
+/*
+ Created on 2022-06-18 by Jacob Bethany
+ Purpose: To decrypt and extract a message from an array of dword values
+ and display it in stdout.
+*/
 #ifdef _WIN32
  #include "windows.h"
  #include "conio.h"
@@ -8,6 +13,7 @@
  #include "stdlib.h"
  #include "stdint.h"
  #include "inttypes.h"
+ #include "stdbool.h"
 
  //Will this parameter be read and not written?
  #define _IN_
@@ -23,6 +29,29 @@
    #define debug_printf(...)
  #endif
 
+//4321 -> 1234 for each dword's bytes.
+ bool unscramble_dw_array (
+   _IN_AND_OUT_ uint32_t *lpui32_dw_array,
+   _IN_ uint32_t ui32_length
+ )
+{{
+ if ( ! lpui32_dw_array || ! ui32_length ) {
+   fprintf ( stderr, "Error: An empty or missing array of dwords can't be unscrambled.\n" );
+   return 0;
+ }
+
+ uint32_t ui32_val;
+ for ( uint32_t ui32_i = 0; ui32_i < ui32_length; ui32_i ++ ) {
+   ui32_val  = (lpui32_dw_array [ ui32_i ] & 0xff000000) >> 24;
+   ui32_val |= (lpui32_dw_array [ ui32_i ] & 0xff0000  ) >> 8;
+   ui32_val |= (lpui32_dw_array [ ui32_i ] & 0xff00    ) << 8;
+   ui32_val |= (lpui32_dw_array [ ui32_i ] & 0xff      ) << 24;
+   lpui32_dw_array [ ui32_i ] = ui32_val;
+ }
+
+ return true;
+}}
+
 //Decrypt and return the number of characters in the string contained within the array.
  uint32_t decrypt_and_get_string_length_from_dword_array (
    _IN_AND_OUT_ uint32_t *lpui32_dw_array,
@@ -31,6 +60,12 @@
 {{
  uint32_t ui32_mask;
  uint32_t ui32_string_length = 0;
+
+ if ( ! unscramble_dw_array ( lpui32_dw_array, ui32_length ) ) {
+   fprintf ( stderr, "Error: We've failed to unscramble the array of dwords.\n" );
+   return 0;
+ }
+
  for ( uint32_t ui32_i = 0; ui32_i < ui32_length; ui32_i ++ ) {
    lpui32_dw_array [ ui32_i ] ^= ((0xff - (ui32_i % 0xff))*0x01010101);
 
@@ -70,6 +105,11 @@
    ui32_string_length
  );
 
+ debug_printf (
+   "Here's the dword array when interpreted as a string via (char *) \"%hs\"\n",
+   (char *) lpui32_dw_array //silence any potential compiler warnings about the type mismatch.
+ );
+
  //Allocate in such a way so as to include enough space for a zero byte at the
  //end of the string, and pre-zero the entire buffer.
  char *lpsz_string = (char *) calloc ( sizeof(char), ui32_string_length + 1 );
@@ -88,7 +128,7 @@
    for ( uint8_t ui8_j = 0; ui8_j < 4; ui8_j ++ ) {
      *p = (lpui32_dw_array [ ui32_i ] & ui32_mask) >> (8*ui8_j);
      p ++;
-     if ( ui32_string_length <= p - lpsz_string ) {
+     if ( p - lpsz_string >= ui32_string_length ) {
        return lpsz_string;
      }
      ui32_mask <<= 8; //0xff -> 0xff00 -> 0xff0000 -> 0xff000000
@@ -104,43 +144,44 @@
  )
 {{
  uint32_t ui32_static_array [  ] = {
-   0x86df90bb, 0x98de8b91, 0x8e969192, 0x929d8bdc,
-   0x948fdb8f, 0x929989da, 0x958c9d9c, 0xd899d89d,
-   0x9f949283, 0x97959f98, 0x9b9cd599, 0x82869180,
-   0xd384969a, 0x81d28693, 0xd1949c9e, 0x9e999f80,
-   0x80cfc39b, 0x8f86ce9c, 0x94cd889b, 0x8dcc9983,
-   0x8a8e9987, 0x8cca938e, 0x8d879c86, 0x9bc889c8,
-   0x86938e92, 0xc6838a84, 0x818b8486, 0x9085808d,
-   0xaae9dc86, 0x8ec286c5, 0xc1848a88, 0x8bc08f94,
-   0xffa8b0b1, 0xaafeb1ad, 0xfda9bcb5, 0xbdbffc95,
-   0xbebffbb5, 0xbfbeb3b9, 0xbcb1aef9, 0xaabdb0ac,
-   0xf7a5b8f7, 0xf6a2b9b8, 0xbda6f59c, 0xb0b8a1bb,
-   0xbdbcb0f3, 0xa7bcbba6, 0xbfb8f1b4, 0xa6a2b5a4,
-   0xa6b8aaa6, 0xb9eea9a0, 0xeda5b9a4, 0xa9a4b8a3,
-   0xb9bbebb9, 0xafbab9a5, 0xbfa0bdaa, 0xa4abe8ad,
-   0xb3a9a2ae, 0xa8a7e6b5, 0xb7aaeaa1, 0xa9aba7e4,
-   0xaaada2b3, 0xc8ecb1a7, 0xa0e188cb, 0xa5b2b0b0,
-   0xcbded6dc, 0xd6ca9edb, 0xd4c99dd8, 0xc89cd9d1,
-   0x9bcfdad3, 0x9dcfd5c3, 0xcd99dccf, 0xd6ddd3d9,
-   0x97d8c397, 0xc0d8d9d5, 0xd0c6c7d0, 0xc0ddc394,
-   0xd6de93db, 0xc7dac692, 0xd0d791c2, 0xd1909cc2,
-   0xe68fcbc1, 0xdd8ec389, 0xc1c1c4d9, 0xd9cdcf8c,
-   0xdec4c2df, 0x8ad3c6d9, 0xc0ddd9c6, 0xdcdbc1c5,
-   0xc687c4ce, 0xd2d3c9c4, 0xc0cdd185, 0xcbd6d484,
-   0xc0c6d3d0, 0xcd82d1d6, 0xced681c7, 0xcec9cbd2,
-   0xf0f9bff8, 0xf1d5beec, 0xeee9fcf0, 0x9696b2e9,
-   0xf8f5f2c8, 0xf6ffe8ff, 0xd393b5e0, 0xfaf7fbf9,
-   0xe3f2d5b7, 0xeff8f7fe, 0x95959595
+   0xbb90df86, 0x918bde98, 0x9291968e, 0xdc8b9d92,
+   0x8fdb8f94, 0xda899992, 0x9c9d8c95, 0x9dd899d8,
+   0x8392949f, 0x989f9597, 0x99d59c9b, 0x80918682,
+   0x9a9684d3, 0x9386d281, 0x9e9c94d1, 0x809f999e,
+   0x9bc3cf80, 0x9cce868f, 0x9b88cd94, 0x8399cc8d,
+   0x87998e8a, 0x8e93ca8c, 0x869c878d, 0xc889c89b,
+   0x928e9386, 0x848a83c6, 0x86848b81, 0x8d808590,
+   0x86dce9aa, 0xc586c28e, 0x888a84c1, 0x948fc08b,
+   0xb1b0a8ff, 0xadb1feaa, 0xb5bca9fd, 0x95fcbfbd,
+   0xb5fbbfbe, 0xb9b3bebf, 0xf9aeb1bc, 0xacb0bdaa,
+   0xf7b8a5f7, 0xb8b9a2f6, 0x9cf5a6bd, 0xbba1b8b0,
+   0xf3b0bcbd, 0xa6bbbca7, 0xb4f1b8bf, 0xa4b5a2a6,
+   0xa6aab8a6, 0xa0a9eeb9, 0xa4b9a5ed, 0xa3b8a4a9,
+   0xb9ebbbb9, 0xa5b9baaf, 0xaabda0bf, 0xade8aba4,
+   0xaea2a9b3, 0xb5e6a7a8, 0xa1eaaab7, 0xe4a7aba9,
+   0xb3a2adaa, 0xa7b1ecc8, 0xcb88e1a0, 0xb0b0b2a5,
+   0xdcd6decb, 0xdb9ecad6, 0xd89dc9d4, 0xd1d99cc8,
+   0xd3dacf9b, 0xc3d5cf9d, 0xcfdc99cd, 0xd9d3ddd6,
+   0x97c3d897, 0xd5d9d8c0, 0xd0c7c6d0, 0x94c3ddc0,
+   0xdb93ded6, 0x92c6dac7, 0xc291d7d0, 0xc29c90d1,
+   0xc1cb8fe6, 0x89c38edd, 0xd9c4c1c1, 0x8ccfcdd9,
+   0xdfc2c4de, 0xd9c6d38a, 0xc6d9ddc0, 0xc5c1dbdc,
+   0xcec487c6, 0xc4c9d3d2, 0x85d1cdc0, 0x84d4d6cb,
+   0xd0d3c6c0, 0xd6d182cd, 0xc781d6ce, 0xd2cbc9ce,
+   0xf8bff9f0, 0xecbed5f1, 0xf0fce9ee, 0xe9b29696,
+   0xc8f2f5f8, 0xffe8fff6, 0xe0b593d3, 0xf9fbf7fa,
+   0xb7d5f2e3, 0xfef7f8ef, 0x95959595
  };
 
  char *lpsz_string = get_string_from_dword_array (
    ui32_static_array,
-   sizeof ( ui32_static_array )
+   sizeof ( ui32_static_array ) / sizeof ( uint32_t )
  );
  if ( ! lpsz_string ) {
    fprintf ( stderr, "Error: We couldn't get a string from a static DWORD array.\n" );
    return 0;
  }
+
  fprintf (
    stdout,
    "%hs\n",
