@@ -1,17 +1,19 @@
 /*
  Created on 2020-07-03 by Jacob Bethany
  Purpose: To make converting structured data into JSON easy with c++.
- Last modification (2020-07-05):
-  -Added JSON parsing into a new VARIABLE object.
-  -Added get_string, get_integer, and get_double methods.
-  -Revised VARIABLE::operator[] ( const char *sz_key ) to use std::string key_string,
-  instead to avoid subscript access ambiguity where 0 is passed.
-  (0 could be (uint64_t) 0 or (const char *) 0)
-  -Split the project into three source files: "json.cpp," "json.h," and "json_test.cpp."
+ Last modification (2022-08-14):
+   -I've made a new overload of the VARIABLE::parse function that takes a variable
+   reference as a parameter and returns a bool that indicates success or failure.
+   I didn't like that I was returning a new instance of the VARIABLE class that
+   had to be freed via delete.
+   See: bool VARIABLE::parse ( VARIABLE &, const char * );
+   -Also, I've made it so that the types int64, double, and string can be parsed
+   as VARIABLE json objects in and of themselves. (Previously, only types nested
+   within [] and {} could be parsed.)
 
  Remaining tasks:
  [ ] Add std::string VARIABLE::get_last_error ( void ).
- [ ] Make it so that add/set/operator= # isn't ambiguous.
+ [ ] Make it so that add/set/operator = # isn't ambiguous.
  I'd like for all integer types to be understood to be int64_t without
  explicit casting. (I don't want to achieve this by making overloads for int8_t,
  int16_t, int32_t, uint8_t, ...etc.)
@@ -250,6 +252,7 @@
  return this ->m_ul_type;
 }}
 
+#if ( ! JSON_ENFORCE_SAFE_USAGE )
 //This will create a new instance of a VARIABLE class with an empty object (map).
  VARIABLE *VARIABLE::new_object ( void )
 {{
@@ -273,6 +276,7 @@
 {{
  return VARIABLE ( NEW_ARRAY );
 }}
+#endif
 
 //The empty constructor will set the type to invalid.
 //This will allow a value to be assigned later with VARIABLE::at and VARIABLE::add (the vector/array version).
@@ -605,7 +609,11 @@
  if ( this ->m_ul_type == VARIABLE_TYPE_INVALID )
      {
       printf ( "An invalid variable type is becoming an object.\n" );
+#if ( JSON_ENFORCE_SAFE_USAGE )
+      this ->m_lpv_data = (void *) new VARIABLE ( NEW_OBJECT );
+#else
       this ->m_lpv_data = (void *) VARIABLE::new_object (  );
+#endif
       this ->m_ul_type = VARIABLE_TYPE_OBJECT;
      }
  else if ( this ->m_ul_type != VARIABLE_TYPE_OBJECT )
@@ -1436,6 +1444,240 @@
  }
 
  return some_variable;
+}}
+
+/*
+ This will parse some JSON and return the resulting variable.
+ On failure, it will return an empty variable.
+*/
+ bool VARIABLE::parse ( VARIABLE &some_variable, const char *sz_json_string )
+{{
+ //Reset any lingering data from a previous parse.
+ some_variable .clear (  );
+ std::string minimal_json_string = VARIABLE::get_minimal_json_string ( sz_json_string );
+
+ //If we're parsing an empty string.
+ if ( minimal_json_string.empty() ) {
+   return false;
+ }
+ //If this is an integer or floating point number.
+ if ( isdigit(minimal_json_string [ 0 ]) ) {
+   if ( strchr(minimal_json_string.c_str(), '.') ) {
+     some_variable = (double) atof ( minimal_json_string.c_str() );
+   }
+   else {
+     some_variable = (int64_t) atoi ( minimal_json_string.c_str() );
+   }
+   return true;
+ }
+ //If we're not starting with a { or [ token, and it's not starting with
+ //a number, it must be a string data type.
+ else if ( ! strchr ( "{[", minimal_json_string[0] ) ) {
+   //Assign this to the string because it's a string type.
+   //This should automatically update the type, as well.
+   some_variable = minimal_json_string .c_str (  );
+   return true;
+ }
+
+ if ( JSON_DEBUG_MODE )
+      printf ( "Here's what we're parsing:\n>>>>\n%s\n<<<<\n\n", minimal_json_string .c_str (  ) );
+
+ std::vector<std::string> key_vector;
+ std::vector<uint32_t> hierarchy_vector; //is it an object ( VARIABLE_TYPE_OBJECT ) or an array ( VARIABLE_TYPE_ARRAY )?
+
+ std::string key;
+ std::string item;
+ uint32_t ul_type;
+ unsigned char b_need_key = 0;
+
+ std::string::iterator p = minimal_json_string .begin (  ), e = minimal_json_string .end (  );
+
+ while ( p < e ) {
+
+   //We'll store the key in the key vector if and only if we've just encountered a new '{' token.
+   unsigned char b_store_key = 0;
+
+   //Skip the delimiter between elements, if we're on one.
+   if ( *p == ',' )
+        p ++;
+
+   //If we've found an object.
+   if ( *p == '{' ) {
+
+     hierarchy_vector .push_back ( VARIABLE_TYPE_OBJECT );
+     b_store_key = 1;
+     p ++; //skip the '{' token.
+
+   }
+   else if ( *p == '[' ) {
+
+     hierarchy_vector .push_back ( VARIABLE_TYPE_ARRAY );
+     p ++; //skip the '[' token.
+   }
+
+   else if ( *p == ']' ) {
+
+//printf ( "']' located at:\n>>>>\n%s\n<<<<\n", p );
+     if ( ! hierarchy_vector .size (  ) )
+         {
+          printf ( "Error: A ']' or '}' token was found and we aren't within an object or array.\n" );
+          break;
+         }
+     hierarchy_vector .pop_back (  );
+     p ++;
+     continue;
+   }
+
+   else if ( *p == '}' ) {
+//printf ( "'}' located at:\n>>>>\n%s\n<<<<\n", p );
+
+     if ( ! hierarchy_vector .size (  ) )
+         {
+          printf ( "Error: A ']' or '}' token was found and we aren't within an object or array.\n" );
+          break;
+         }
+     hierarchy_vector .pop_back (  );
+
+     //We also need to assign a new key for this pairing level, probably.
+     if ( ! key_vector .size (  ) )
+         {
+          printf ( "Error: A '}' was found but we're not within an object.\n" );
+          break;
+         }
+
+     if ( JSON_DEBUG_MODE )
+          printf ( "Calling key_vector .pop_back (  );\n" );
+
+     key_vector .pop_back (  );
+     p ++;
+     continue;
+   }
+
+   //Use the type for this level of nesting.
+   if ( hierarchy_vector .size (  ) )
+        b_need_key = hierarchy_vector .back (  ) == VARIABLE_TYPE_OBJECT ? 1 : 0;
+   else b_need_key = 0;
+
+   if ( b_need_key ) {
+     //Get the key string.
+     if ( e == (p = VARIABLE::consume_item ( p, e, key, ul_type )) )
+        break;
+
+     if ( JSON_DEBUG_MODE )
+          printf ( "Here's the key of the object: \"%s\"\n", key .c_str (  ) );
+
+     if ( *p != ':' )
+         {
+          printf ( "Error: There was a missing ':' delimiter in a JSON object.\n" );
+          some_variable.clear();
+          return false;
+         }
+     p ++; //skip the ':' token.
+
+     //We only store keys for the starts of new objects. The pairs within them don't need to be stored.
+     if ( b_store_key )
+         {
+          key_vector .push_back ( key );
+          VARIABLE *node = VARIABLE::get_node_at_key_path ( &some_variable, key_vector );
+         }
+     //If we don't need to store it, then we need to overwrite the key at this level.
+     else key_vector .back (  ) = key;
+   }
+
+   //If we have an object or array inside of an object or array, continue from the top.
+   if ( *p == '[' || *p == '{' )
+        continue;
+
+
+   //Get the value whether it's an array or associated with some key.
+   if ( e == (p = VARIABLE::consume_item ( p, e, item, ul_type )) )
+        break;
+
+   if ( JSON_DEBUG_MODE )
+        printf ( "Item: \"%s\"\n", item .c_str (  ) );
+
+   //Ensure that the JSON string isn't malformed.
+   //It's possible that the string ends after a value, if the JSON consists of a single primitive, hence the p != e exclusion.
+   if ( *p != ',' && *p != '\"' && *p != '}' && *p != ']' && p != e )
+       {
+        printf ( "Found '%c'; expected ',', '\\\"', ']', or '}' after object key & value pair were parsed.\n", *p );
+        printf ( "Here's the rest of the JSON:\n>>>>\n%s\n<<<<\n", p );
+        break;
+       }
+
+   //If we're dealing with an object.
+   //Show debugging information:
+   if ( JSON_DEBUG_MODE )
+       {
+        printf ( "some_variable " );
+        for ( std::vector<std::string>::iterator key_iterator = key_vector .begin (  );
+              key_iterator != key_vector .end (  );
+              key_iterator ++
+            )
+             {
+              printf ( " [ \"%s\" ]", key_iterator ->c_str (  ) );
+             }
+        if ( b_need_key )
+             printf ( " = \"%s\";\n", item .c_str (  ) );
+        else printf ( " .push_back ( \"%s\" );\n", item .c_str (  ) );
+       }
+
+   //Actually add the value to the variable, now.
+   VARIABLE *node = VARIABLE::get_node_at_key_path ( &some_variable, key_vector );
+
+   int64_t i64_integer;
+   double dbl_double;
+
+   //Convert the data to the proper type.
+   if ( ul_type == VARIABLE_TYPE_INT64 )
+       {
+        //printf ( "Trying stoll ( \"%s\" ).\n", item .c_str (  ) );
+        i64_integer = stoll ( item ); //stoi = 0->255, stol and stoll are bigger.
+
+        //It's possible that the JSON that we're parsing is just a single primitive.
+        if ( key_vector .size (  ) )
+            {
+             if ( b_need_key )
+                  node ->set ( i64_integer ); //should be blank right now.
+             else
+                  node ->add ( i64_integer );
+            }
+        else
+             node ->set ( i64_integer );
+       }
+   else if ( ul_type == VARIABLE_TYPE_DOUBLE )
+       {
+        dbl_double = stod ( item );
+
+        //It's possible that the JSON that we're parsing is just a single primitive.
+        if ( key_vector .size (  ) )
+            {
+             if ( b_need_key )
+                  node ->set ( dbl_double ); //should be blank right now.
+             else
+                  node ->add ( dbl_double );
+            }
+        else
+             node ->set ( dbl_double );
+       }
+   else if ( ul_type == VARIABLE_TYPE_STRING )
+       {
+        //It's possible that the JSON that we're parsing is just a single primitive.
+        if ( key_vector .size (  ) )
+            {
+             if ( b_need_key )
+                  node ->set ( item ); //should be blank right now.
+             else
+                  node ->add ( item );
+            }
+        else
+             node ->set ( item );
+       }
+
+   //printf ( "Current object:\n%s\n\n", some_variable ->to_json (  ) .c_str (  ) );
+ }
+
+ return true;
 }}
 
 /*
