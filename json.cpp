@@ -1215,6 +1215,29 @@
  VARIABLE *some_variable = new VARIABLE (  ); //VARIABLE_TYPE_INVALID by default.
  std::string minimal_json_string = VARIABLE::get_minimal_json_string ( sz_json_string );
 
+ //If we're parsing an empty string.
+ if ( minimal_json_string.empty() ) {
+   return some_variable;
+ }
+ //If this is an integer or floating point number.
+ if ( isdigit(minimal_json_string [ 0 ]) ) {
+   if ( strchr(minimal_json_string.c_str(), '.') ) {
+     *some_variable = (double) atof ( minimal_json_string.c_str() );
+   }
+   else {
+     *some_variable = (int64_t) atoi ( minimal_json_string.c_str() );
+   }
+   return some_variable;
+ }
+ //If we're not starting with a { or [ token, and it's not starting with
+ //a number, it must be a string data type.
+ else if ( ! strchr ( "{[", minimal_json_string[0] ) ) {
+   //Assign this to the string because it's a string type.
+   //This should automatically update the type, as well.
+   *some_variable = minimal_json_string.c_str();
+   return some_variable;
+ }
+
  if ( JSON_DEBUG_MODE )
       printf ( "Here's what we're parsing:\n>>>>\n%s\n<<<<\n\n", minimal_json_string .c_str (  ) );
 
