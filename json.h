@@ -24,6 +24,7 @@
 #define NEW_OBJECT (std::map<std::string, VARIABLE *> *) 0
 #define NEW_ARRAY (std::vector<VARIABLE *> *) 0
 #define JSON_DEBUG_MODE 0
+#define JSON_ENFORCE_SAFE_USAGE 1
 #endif
 
  class VARIABLE
@@ -34,12 +35,16 @@
 
  public:
 
+   VARIABLE ( const VARIABLE & ) = delete;
+
    //Helper constructors (these are the same as VARIABLE v = VARIABLE ( NEW_OBJECT );
    //and VARIABLE *v = new VARIABLE ( NEW_ARRAY ); ...etc.
+#if ( ! JSON_ENFORCE_SAFE_USAGE )
    static VARIABLE *new_object ( void );
    static VARIABLE *new_array ( void );
    static VARIABLE empty_object ( void );
    static VARIABLE empty_array ( void );
+#endif
    static std::string get_escaped_string ( std::string str );
    static std::string get_escaped_string ( std::string *str );
    static std::string get_minimal_json_string ( const char *sz_json_string );
@@ -56,7 +61,10 @@
      std::string &item,
      uint32_t &type
    );
-   static VARIABLE *parse ( const char *sz_json_string ); //This will create a local instance of the VARIABLE class, given some JSON, and return it.
+
+   //This will create a local instance of the VARIABLE class, given some JSON, and return it.
+   static VARIABLE *parse ( const char *sz_json_string );
+   static bool parse ( VARIABLE &variable, const char *sz_json_string );
 
    VARIABLE ( void ); //empty constructor defaults to VARIABLE_TYPE_INVALID with a null pointer in m_lpv_data.
    VARIABLE ( std::string str );
